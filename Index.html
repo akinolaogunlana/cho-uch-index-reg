@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>CHO Indexing Form</title>
+</head>
+<body>
+
+<h2>CHO Indexing Data Collection</h2>
+
+<form id="indexForm" enctype="multipart/form-data">
+
+<h3>Personal Information</h3>
+<input name="surname" placeholder="Surname" required>
+<input name="firstname" placeholder="First Name" required>
+<input name="othernames" placeholder="Other Names">
+
+<input type="file" name="passport" accept="image/*" required>
+
+<input name="cadre" value="CHO" readonly>
+
+<select name="gender" required>
+  <option value="">Select Gender</option>
+  <option value="MALE">MALE</option>
+  <option value="FEMALE">FEMALE</option>
+</select>
+
+<input name="bloodgroup" placeholder="Blood Group">
+<input name="state" placeholder="State">
+<input name="lga" placeholder="LGA">
+<input type="date" name="dob">
+
+<h3>O'Level</h3>
+<input name="olevel_type" placeholder="O-Level Type (e.g COMBINED)">
+<input name="olevel_year" placeholder="O-Level Year(s)">
+<input name="olevel_exam" placeholder="O-Level Exam Number(s)">
+
+<h3>A'Level / Professional</h3>
+<input name="alevel_type" placeholder="A-Level Type">
+<input name="alevel_year" placeholder="A-Level Year">
+<input name="pro_cert" placeholder="Professional Certificate Number">
+
+<h3>Subjects & Grades</h3>
+
+<!-- ENGLISH -->
+<input id="engGrade" placeholder="English Grade (A1–F9)">
+<select id="engBody">
+  <option>WAEC</option>
+  <option>NECO</option>
+</select>
+
+<!-- MATHS -->
+<input id="mathGrade" placeholder="Mathematics Grade (A1–F9)">
+<select id="mathBody">
+  <option>WAEC</option>
+  <option>NECO</option>
+</select>
+
+<!-- BIOLOGY -->
+<input id="bioGrade" placeholder="Biology/HS Grade (A1–F9)">
+<select id="bioBody">
+  <option>WAEC</option>
+  <option>NECO</option>
+</select>
+
+<!-- CHEMISTRY -->
+<input id="chemGrade" placeholder="Chemistry Grade (A1–F9)">
+<select id="chemBody">
+  <option>WAEC</option>
+  <option>NECO</option>
+</select>
+
+<!-- PHYSICS -->
+<input id="phyGrade" placeholder="Physics Grade (A1–F9)">
+<select id="phyBody">
+  <option>WAEC</option>
+  <option>NECO</option>
+</select>
+
+<!-- Hidden fields sent to sheet -->
+<input type="hidden" name="english">
+<input type="hidden" name="maths">
+<input type="hidden" name="biology">
+<input type="hidden" name="chemistry">
+<input type="hidden" name="physics">
+
+<input name="remarks" placeholder="Remarks">
+
+<button type="submit">Submit</button>
+
+</form>
+
+<script src="script.js"></script>
+</body>
+  </html>
