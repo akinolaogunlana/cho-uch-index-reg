@@ -1,120 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-<link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CHO Indexing Form</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h2>CHO Indexing Data Collection</h2>
+<h2>CHO UCH INDEX REGISTRATION</h2>
 
 <form id="indexForm" enctype="multipart/form-data">
 
-<h3>Personal Information</h3>
+  <!-- ===== PERSONAL INFORMATION ===== -->
+  <section>
+    <h3>Personal Information</h3>
+    <label for="surname">SURNAME</label>
+    <input id="surname" name="SURNAME" placeholder="Surname" required>
 
-<input name="surname" placeholder="Surname" required>
-<input name="firstname" placeholder="First Name" required>
-<input name="othernames" placeholder="Other Names">
+    <label for="firstname">FIRSTNAME</label>
+    <input id="firstname" name="FIRSTNAME" placeholder="First Name" required>
 
-<input type="file" name="passport" accept="image/*" required>
+    <label for="othernames">OTHERNAMES</label>
+    <input id="othernames" name="OTHERNAMES" placeholder="Other Names">
 
-<input name="cadre" value="CHO" readonly>
+    <label for="passport">PASSPORT</label>
+    <input type="file" id="passport" name="PASSPORT" accept="image/*" required>
 
-<select name="gender" required>
-  <option value="">Select Gender</option>
-  <option value="MALE">MALE</option>
-  <option value="FEMALE">FEMALE</option>
-</select>
+    <label for="cadre">CADRE</label>
+    <input id="cadre" name="CADRE" value="CHO" readonly>
 
-<input name="bloodgroup" placeholder="Blood Group">
-<input name="state" placeholder="State">
-<input name="lga" placeholder="LGA / City / Town">
-<input type="date" name="dob">
+    <label for="gender">GENDER</label>
+    <select id="gender" name="GENDER" required>
+      <option value="">Select Gender</option>
+      <option value="MALE">MALE</option>
+      <option value="FEMALE">FEMALE</option>
+    </select>
 
-<h3>O'Level</h3>
+    <label for="bloodgroup">BLOOD GROUP</label>
+    <input id="bloodgroup" name="BLOOD GROUP" placeholder="Blood Group">
 
-<select name="olevel_type" required>
-  <option value="">Select O-Level Type</option>
-  <option value="WAEC">WAEC (Single Sitting)</option>
-  <option value="NECO">NECO (Single Sitting)</option>
-  <option value="WAEC / WAEC">WAEC / WAEC (Two Sittings)</option>
-  <option value="NECO / NECO">NECO / NECO (Two Sittings)</option>
-  <option value="NECO / WAEC">NECO / WAEC (Combined)</option>
-</select>
+    <label for="state">STATE</label>
+    <input id="state" name="STATE" placeholder="State">
 
-<input name="olevel_year" placeholder="O-Level Year(s) e.g 2021 / 2023">
-<input name="olevel_exam" placeholder="O-Level Exam Number(s)">
+    <label for="lga">LGA / CITY / TOWN</label>
+    <input id="lga" name="LGA / CITY / TOWN" placeholder="LGA / City / Town">
 
-<h3>A'Level / Professional</h3>
+    <label for="dob">DATE OF BIRTH</label>
+    <input type="date" id="dob" name="DATE OF BIRTH" required>
+  </section>
 
-<input name="alevel_type" placeholder="A-Level Type">
-<input name="alevel_year" placeholder="A-Level Year">
-<input name="pro_cert" placeholder="Professional Certificate Number">
+  <!-- ===== O'LEVEL ===== -->
+  <section>
+    <h3>O'LEVEL</h3>
+    <label for="olevel_type">OLEVEL TYPE</label>
+    <select id="olevel_type" name="OLEVEL TYPE" required>
+      <option value="">Select O-Level Type</option>
+      <option value="WAEC">WAEC (Single Sitting)</option>
+      <option value="NECO">NECO (Single Sitting)</option>
+      <option value="WAEC / WAEC">WAEC / WAEC (Two Sittings)</option>
+      <option value="NECO / NECO">NECO / NECO (Two Sittings)</option>
+      <option value="NECO / WAEC">NECO / WAEC (Combined)</option>
+    </select>
 
-<h3>Subjects & Grades</h3>
+    <label for="olevel_year">OLEVEL YEAR</label>
+    <input id="olevel_year" name="OLEVEL YEAR" placeholder="O-Level Year(s) e.g 2021 / 2023">
 
-<!-- ENGLISH -->
-<label>English Language</label><br>
-<input id="engGrade" placeholder="Grade e.g B2" required>
-<select id="engBody">
-  <option value="WAEC">WAEC</option>
-  <option value="NECO">NECO</option>
-</select>
-<br><br>
+    <label for="olevel_exam">OLEVEL EXAM NUMBER</label>
+    <input id="olevel_exam" name="OLEVEL EXAM NUMBER" placeholder="O-Level Exam Number(s)">
+  </section>
 
-<!-- MATHS -->
-<label>Mathematics</label><br>
-<input id="mathGrade" placeholder="Grade e.g C5" required>
-<select id="mathBody">
-  <option value="WAEC">WAEC</option>
-  <option value="NECO">NECO</option>
-</select>
-<br><br>
+  <!-- ===== A'LEVEL / PROFESSIONAL ===== -->
+  <section>
+    <h3>A'LEVEL / PROFESSIONAL</h3>
+    <label for="alevel_type">ALEVEL TYPE</label>
+    <input id="alevel_type" name="ALEVEL TYPE" placeholder="A-Level Type">
 
-<!-- BIOLOGY -->
-<label>Biology / Health Science</label><br>
-<input id="bioGrade" placeholder="Grade e.g C4">
-<select id="bioBody">
-  <option value="WAEC">WAEC</option>
-  <option value="NECO">NECO</option>
-</select>
-<br><br>
+    <label for="alevel_year">ALEVEL YEAR</label>
+    <input id="alevel_year" name="ALEVEL YEAR" placeholder="A-Level Year">
 
-<!-- CHEMISTRY -->
-<label>Chemistry</label><br>
-<input id="chemGrade" placeholder="Grade e.g C6">
-<select id="chemBody">
-  <option value="WAEC">WAEC</option>
-  <option value="NECO">NECO</option>
-</select>
-<br><br>
+    <label for="pro_cert">PROFESSIONAL CERTIFICATE NUMBER</label>
+    <input id="pro_cert" name="PROFESSIONAL CERTIFICATE NUMBER" placeholder="Professional Certificate Number">
+  </section>
 
-<!-- PHYSICS -->
-<label>Physics</label><br>
-<input id="phyGrade" placeholder="Grade e.g C5">
-<select id="phyBody">
-  <option value="WAEC">WAEC</option>
-  <option value="NECO">NECO</option>
-</select>
+  <!-- ===== SUBJECTS & GRADES ===== -->
+  <section>
+    <h3>SUBJECTS & GRADES</h3>
+    <div class="subjects-grid">
+      <!-- ENGLISH -->
+      <div>
+        <label>ENGLISH</label>
+        <input id="engGrade" placeholder="Grade e.g B2" required>
+        <select id="engBody">
+          <option value="WAEC">WAEC</option>
+          <option value="NECO">NECO</option>
+        </select>
+      </div>
 
-<!-- HIDDEN FIELDS SENT TO GOOGLE SHEET -->
-<input type="hidden" name="english">
-<input type="hidden" name="maths">
-<input type="hidden" name="biology">
-<input type="hidden" name="chemistry">
-<input type="hidden" name="physics">
+      <!-- MATHS -->
+      <div>
+        <label>MATHEMATICS</label>
+        <input id="mathGrade" placeholder="Grade e.g C5" required>
+        <select id="mathBody">
+          <option value="WAEC">WAEC</option>
+          <option value="NECO">NECO</option>
+        </select>
+      </div>
 
-<br><br>
+      <!-- BIOLOGY -->
+      <div>
+        <label>BIOLOGY / HEALTH SCIENCE</label>
+        <input id="bioGrade" placeholder="Grade e.g C4">
+        <select id="bioBody">
+          <option value="WAEC">WAEC</option>
+          <option value="NECO">NECO</option>
+        </select>
+      </div>
 
-<input name="remarks" placeholder="Remarks">
+      <!-- CHEMISTRY -->
+      <div>
+        <label>CHEMISTRY</label>
+        <input id="chemGrade" placeholder="Grade e.g C6">
+        <select id="chemBody">
+          <option value="WAEC">WAEC</option>
+          <option value="NECO">NECO</option>
+        </select>
+      </div>
 
-<br><br>
-<button type="submit">Submit</button>
+      <!-- PHYSICS -->
+      <div>
+        <label>PHYSICS</label>
+        <input id="phyGrade" placeholder="Grade e.g C5">
+        <select id="phyBody">
+          <option value="WAEC">WAEC</option>
+          <option value="NECO">NECO</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== REMARKS ===== -->
+  <section>
+    <h3>REMARKS</h3>
+    <input name="REMARKS" placeholder="Remarks">
+  </section>
+
+  <!-- ===== HIDDEN FIELDS FOR SUBJECTS ===== -->
+  <input type="hidden" name="ENGLISH">
+  <input type="hidden" name="MATHEMATICS">
+  <input type="hidden" name="BIOLOGY / HEALTH SCIENCE">
+  <input type="hidden" name="CHEMISTRY">
+  <input type="hidden" name="PHYSICS">
+
+  <button type="submit">Submit</button>
 
 </form>
 
-<script src="script.js"></script>
+<script>
+  // ===== Populate hidden fields before submission =====
+  const form = document.getElementById('indexForm');
+  form.addEventListener('submit', (e) => {
+    document.querySelector('input[name="ENGLISH"]').value = document.getElementById('engGrade').value + ' (' + document.getElementById('engBody').value + ')';
+    document.querySelector('input[name="MATHEMATICS"]').value = document.getElementById('mathGrade').value + ' (' + document.getElementById('mathBody').value + ')';
+    document.querySelector('input[name="BIOLOGY / HEALTH SCIENCE"]').value = document.getElementById('bioGrade').value + ' (' + document.getElementById('bioBody').value + ')';
+    document.querySelector('input[name="CHEMISTRY"]').value = document.getElementById('chemGrade').value + ' (' + document.getElementById('chemBody').value + ')';
+    document.querySelector('input[name="PHYSICS"]').value = document.getElementById('phyGrade').value + ' (' + document.getElementById('phyBody').value + ')';
+  });
+</script>
 
 </body>
-</html>
+  </html>
