@@ -7,36 +7,32 @@
 </head>
 <body>
 
+<div id="formContainer">
 <h2>CHO INDEXING DATA COLLECTION</h2>
 
-<form id="indexForm"
-      action="https://script.google.com/macros/s/AKfycbzieIuL9kZqDLTmrQlW_FoRNEgJmeGjK2HMac_PIHhtUeogci_TwQgtTyZ3YoUUHg/exec"
-      method="POST"
-      enctype="multipart/form-data">
+<form id="indexForm">
 
-  <!-- PERSONAL INFORMATION -->
+  <!-- Personal Information -->
   <h3>PERSONAL INFORMATION</h3>
   <input name="surname" placeholder="SURNAME" required>
   <input name="firstname" placeholder="FIRSTNAME" required>
   <input name="othernames" placeholder="OTHERNAMES">
-
-  <label for="passport">PASSPORT</label>
-  <input type="file" name="passport" id="passport" accept="image/*" required>
-
+  
+  <label>PASSPORT</label>
+  <input type="file" id="passport" accept="image/*" required>
+  
   <input name="cadre" value="CHO" readonly>
-
+  
   <select name="gender" required>
     <option value="">SELECT GENDER</option>
     <option value="MALE">MALE</option>
     <option value="FEMALE">FEMALE</option>
   </select>
-
+  
   <input name="bloodgroup" placeholder="BLOOD GROUP">
   <input name="state" placeholder="STATE">
   <input name="lga" placeholder="LGA / CITY/TOWN">
-
-  <label for="dob">DATE OF BIRTH</label>
-  <input type="date" name="dob" id="dob" required>
+  <input type="date" name="dob" required>
 
   <!-- O'LEVEL -->
   <h3>O'LEVEL</h3>
@@ -57,73 +53,133 @@
   <input name="alevel_year" placeholder="A-LEVEL YEAR">
   <input name="pro_cert" placeholder="PROFESSIONAL CERTIFICATE NUMBER">
 
-  <!-- SUBJECTS & GRADES -->
+  <!-- Subjects -->
   <h3>SUBJECTS & GRADES</h3>
-
-  <label>ENGLISH</label>
-  <input id="engGrade" placeholder="GRADE" required>
+  <input id="engGrade" placeholder="ENGLISH GRADE" required>
   <select id="engBody">
     <option value="WAEC">WAEC</option>
     <option value="NECO">NECO</option>
   </select>
 
-  <label>MATHEMATICS</label>
-  <input id="mathGrade" placeholder="GRADE" required>
+  <input id="mathGrade" placeholder="MATHEMATICS GRADE" required>
   <select id="mathBody">
     <option value="WAEC">WAEC</option>
     <option value="NECO">NECO</option>
   </select>
 
-  <label>BIOLOGY / HEALTH SCIENCE</label>
-  <input id="bioGrade" placeholder="GRADE">
+  <input id="bioGrade" placeholder="BIOLOGY GRADE">
   <select id="bioBody">
     <option value="WAEC">WAEC</option>
     <option value="NECO">NECO</option>
   </select>
 
-  <label>CHEMISTRY</label>
-  <input id="chemGrade" placeholder="GRADE">
+  <input id="chemGrade" placeholder="CHEMISTRY GRADE">
   <select id="chemBody">
     <option value="WAEC">WAEC</option>
     <option value="NECO">NECO</option>
   </select>
 
-  <label>PHYSICS</label>
-  <input id="phyGrade" placeholder="GRADE">
+  <input id="phyGrade" placeholder="PHYSICS GRADE">
   <select id="phyBody">
     <option value="WAEC">WAEC</option>
     <option value="NECO">NECO</option>
   </select>
-
-  <!-- Hidden fields for combined grade + board -->
-  <input type="hidden" name="english">
-  <input type="hidden" name="maths">
-  <input type="hidden" name="biology">
-  <input type="hidden" name="chemistry">
-  <input type="hidden" name="physics">
 
   <input name="remarks" placeholder="REMARKS">
 
   <br><br>
   <button type="submit">SUBMIT</button>
 </form>
+</div>
 
-<!-- Combine grades + board before submission -->
+<!-- SUCCESS PAGE -->
+<div id="successPage" style="display:none; text-align:center; padding:50px;">
+  <h2>Submission Successful!</h2>
+  <img id="passportPreview" src="" alt="Passport" style="width:150px; border-radius:5px; margin:20px 0;">
+  <p id="userName"></p>
+  <button onclick="showForm()">Submit Another</button>
+</div>
+
 <script>
-  const form = document.getElementById("indexForm");
+const SHEETBEST_URL = "https://api.sheetbest.com/sheets/c610f771-67a2-4120-b4fa-c2d102aee546";
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/<YOUR_CLOUD_NAME>/upload";
+const CLOUDINARY_PRESET = "<YOUR_UPLOAD_PRESET>";
 
-  form.addEventListener("submit", function(e) {
-    document.querySelector('input[name="english"]').value = 
-      document.getElementById("engGrade").value + " (" + document.getElementById("engBody").value + ")";
-    document.querySelector('input[name="maths"]').value = 
-      document.getElementById("mathGrade").value + " (" + document.getElementById("mathBody").value + ")";
-    document.querySelector('input[name="biology"]').value = 
-      document.getElementById("bioGrade").value + " (" + document.getElementById("bioBody").value + ")";
-    document.querySelector('input[name="chemistry"]').value = 
-      document.getElementById("chemGrade").value + " (" + document.getElementById("chemBody").value + ")";
-    document.querySelector('input[name="physics"]').value = 
-      document.getElementById("phyGrade").value + " (" + document.getElementById("phyBody").value + ")";
+function showForm() {
+  document.getElementById('successPage').style.display = 'none';
+  document.getElementById('formContainer').style.display = 'block';
+}
+
+document.getElementById("indexForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+  const form = e.target;
+
+  // 1️⃣ Upload passport
+  const passportFile = document.getElementById("passport").files[0];
+  if(!passportFile) return alert("Please select a passport image.");
+
+  const cloudForm = new FormData();
+  cloudForm.append("file", passportFile);
+  cloudForm.append("upload_preset", CLOUDINARY_PRESET);
+
+  let passportUrl = "";
+  try {
+    const cloudRes = await fetch(CLOUDINARY_URL, {method:"POST", body:cloudForm});
+    const cloudData = await cloudRes.json();
+    passportUrl = cloudData.secure_url;
+  } catch(err) {
+    return alert("Passport upload failed.");
+  }
+
+  // 2️⃣ Combine grades + board
+  const subjects = ["english","maths","biology","chemistry","physics"];
+  const data = {};
+  subjects.forEach(subj=>{
+    const grade = document.getElementById(subj.slice(0,3)+"Grade").value;
+    const board = document.getElementById(subj.slice(0,3)+"Body").value;
+    data[subj.toUpperCase()] = grade + " (" + board + ")";
   });
+
+  // 3️⃣ Collect all form data
+  data["SURNAME"] = form.surname.value.toUpperCase();
+  data["FIRSTNAME"] = form.firstname.value.toUpperCase();
+  data["OTHERNAMES"] = form.othernames.value.toUpperCase();
+  data["PASSPORT"] = passportUrl;
+  data["CADRE"] = form.cadre.value;
+  data["GENDER"] = form.gender.value;
+  data["BLOOD_GROUP"] = form.bloodgroup.value;
+  data["STATE"] = form.state.value;
+  data["LGA_CITY_TOWN"] = form.lga.value;
+  data["DATE_OF_BIRTH"] = form.dob.value;
+  data["OLEVEL_TYPE"] = form.olevel_type.value;
+  data["OLEVEL_YEAR"] = form.olevel_year.value;
+  data["OLEVEL_EXAM_NUMBER"] = form.olevel_exam.value;
+  data["ALEVEL_TYPE"] = form.alevel_type.value;
+  data["ALEVEL_YEAR"] = form.alevel_year.value;
+  data["PROFESSIONAL_CERTIFICATE_NUMBER"] = form.pro_cert.value;
+  data["REMARKS"] = form.remarks.value;
+
+  // 4️⃣ Send to SheetBest
+  try {
+    await fetch(SHEETBEST_URL, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(data)
+    });
+
+    // Show success page with passport preview and name
+    document.getElementById('formContainer').style.display = 'none';
+    document.getElementById('successPage').style.display = 'block';
+    document.getElementById('passportPreview').src = passportUrl;
+    document.getElementById('userName').innerText = 
+      `${data["SURNAME"]} ${data["FIRSTNAME"]} ${data["OTHERNAMES"]}`;
+    form.reset();
+
+  } catch(err) {
+    alert("Submission failed. Please try again.");
+    console.error(err);
+  }
+});
 </script>
 
 </body>
