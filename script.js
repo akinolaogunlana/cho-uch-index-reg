@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-
   const SHEETBEST_URL = "https://api.sheetbest.com/sheets/c610f771-67a2-4120-b4fa-c2d102aee546";
   const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
   const CLOUDINARY_PRESET = "cho_passports";
@@ -17,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!file) throw "Passport photo is required.";
       if (file.size > 5 * 1024 * 1024) throw "Image too large (max 5MB).";
 
-      // 1️⃣ Upload to Cloudinary
+      // Upload to Cloudinary
       const cloudForm = new FormData();
       cloudForm.append("file", file);
       cloudForm.append("upload_preset", CLOUDINARY_PRESET);
@@ -29,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       submitBtn.innerText = "Saving data...";
 
-      // 2️⃣ Prepare SheetBest data with exact headers
+      // Prepare SheetBest data
       const data = [{
         "SURNAME": form.surname.value.trim().toUpperCase(),
         "FIRSTNAME": form.firstname.value.trim().toUpperCase(),
@@ -37,34 +36,34 @@ document.addEventListener("DOMContentLoaded", function () {
         "PASSPORT": cloudData.secure_url,
         "CADRE": form.cadre.value,
         "GENDER": form.gender.value,
-        "BLOOD GROUP": form.bloodgroup.value,
+        "BLOOD_GROUP": form.bloodgroup.value,
         "STATE": form.state.value,
-        "LGA / CITY/TOWN": form.lga.value,
-        "DATE OF BIRTH": form.dob.value,
-        "OLEVEL TYPE": form.olevel_type.value,
-        "OLEVEL YEAR": form.olevel_year.value,
-        "OLEVEL EXAM NUMBER": form.olevel_exam.value,
-        "ALEVEL TYPE": form.alevel_type.value,
-        "ALEVEL YEAR": form.alevel_year.value,
-        "PROFESSIONAL CERTIFICATE NUMBER": form.pro_cert.value,
-        "ENGLISH": `${engGrade.value} (${engBody.value})`,
-        "MATHEMATICS": `${mathGrade.value} (${mathBody.value})`,
-        "BIOLOGY / HEALTH SCIENCE": bioGrade.value ? `${bioGrade.value} (${bioBody.value})` : "",
-        "CHEMISTRY": chemGrade.value ? `${chemGrade.value} (${chemBody.value})` : "",
-        "PHYSICS": phyGrade.value ? `${phyGrade.value} (${phyBody.value})` : "",
+        "LGA": form.lga.value,
+        "DATE_OF_BIRTH": form.dob.value,
+        "OLEVEL_TYPE": form.olevel_type.value,
+        "OLEVEL_YEAR": form.olevel_year.value,
+        "OLEVEL_EXAM_NUMBER": form.olevel_exam.value,
+        "ALEVEL_TYPE": form.alevel_type.value,
+        "ALEVEL_YEAR": form.alevel_year.value,
+        "PROFESSIONAL_CERTIFICATE_NUMBER": form.pro_cert.value,
+        "ENGLISH": `${document.getElementById("engGrade").value} (${document.getElementById("engBody").value})`,
+        "MATHEMATICS": `${document.getElementById("mathGrade").value} (${document.getElementById("mathBody").value})`,
+        "BIOLOGY": document.getElementById("bioGrade").value ? `${document.getElementById("bioGrade").value} (${document.getElementById("bioBody").value})` : "",
+        "CHEMISTRY": document.getElementById("chemGrade").value ? `${document.getElementById("chemGrade").value} (${document.getElementById("chemBody").value})` : "",
+        "PHYSICS": document.getElementById("phyGrade").value ? `${document.getElementById("phyGrade").value} (${document.getElementById("phyBody").value})` : "",
         "REMARKS": form.remarks.value
       }];
 
-      // 3️⃣ Send to SheetBest
+      // Send to SheetBest
       const sheetRes = await fetch(SHEETBEST_URL, {
         method: "POST",
         mode: "cors",
         body: JSON.stringify(data) // must be an array
       });
 
-      if (!sheetRes.ok) throw "SheetBest rejected the data.";
+      if (!sheetRes.ok) throw "Sheet save failed. Check sheet headers.";
 
-      // 4️⃣ Success screen
+      // Success screen
       form.innerHTML = `
         <div style="text-align:center;padding:40px">
           <h2 style="color:green">✅ Submission Successful</h2>
@@ -80,5 +79,4 @@ document.addEventListener("DOMContentLoaded", function () {
       submitBtn.innerText = "SUBMIT";
     }
   });
-
 });
