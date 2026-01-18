@@ -29,42 +29,42 @@ document.addEventListener("DOMContentLoaded", function () {
 
       submitBtn.innerText = "Saving data...";
 
-      // 2️⃣ Prepare SheetBest data
+      // 2️⃣ Prepare SheetBest data with exact headers
       const data = [{
-        SURNAME: form.surname.value.trim().toUpperCase(),
-        FIRSTNAME: form.firstname.value.trim().toUpperCase(),
-        OTHERNAMES: form.othernames.value.trim().toUpperCase(),
-        PASSPORT: cloudData.secure_url,
-        CADRE: form.cadre.value,
-        GENDER: form.gender.value,
-        BLOOD_GROUP: form.bloodgroup.value,
-        STATE: form.state.value,
-        LGA_CITY_TOWN: form.lga.value,
-        DATE_OF_BIRTH: form.dob.value,
-        OLEVEL_TYPE: form.olevel_type.value,
-        OLEVEL_YEAR: form.olevel_year.value,
-        OLEVEL_EXAM_NUMBER: form.olevel_exam.value,
-        ALEVEL_TYPE: form.alevel_type.value,
-        ALEVEL_YEAR: form.alevel_year.value,
-        PROFESSIONAL_CERTIFICATE_NUMBER: form.pro_cert.value,
-        REMARKS: form.remarks.value,
-        ENGLISH: `${engGrade.value} (${engBody.value})`,
-        MATHEMATICS: `${mathGrade.value} (${mathBody.value})`,
-        BIOLOGY: bioGrade.value ? `${bioGrade.value} (${bioBody.value})` : "",
-        CHEMISTRY: chemGrade.value ? `${chemGrade.value} (${chemBody.value})` : "",
-        PHYSICS: phyGrade.value ? `${phyGrade.value} (${phyBody.value})` : ""
+        "SURNAME": form.surname.value.trim().toUpperCase(),
+        "FIRSTNAME": form.firstname.value.trim().toUpperCase(),
+        "OTHERNAMES": form.othernames.value.trim().toUpperCase(),
+        "PASSPORT": cloudData.secure_url,
+        "CADRE": form.cadre.value,
+        "GENDER": form.gender.value,
+        "BLOOD GROUP": form.bloodgroup.value,
+        "STATE": form.state.value,
+        "LGA / CITY/TOWN": form.lga.value,
+        "DATE OF BIRTH": form.dob.value,
+        "OLEVEL TYPE": form.olevel_type.value,
+        "OLEVEL YEAR": form.olevel_year.value,
+        "OLEVEL EXAM NUMBER": form.olevel_exam.value,
+        "ALEVEL TYPE": form.alevel_type.value,
+        "ALEVEL YEAR": form.alevel_year.value,
+        "PROFESSIONAL CERTIFICATE NUMBER": form.pro_cert.value,
+        "ENGLISH": `${engGrade.value} (${engBody.value})`,
+        "MATHEMATICS": `${mathGrade.value} (${mathBody.value})`,
+        "BIOLOGY / HEALTH SCIENCE": bioGrade.value ? `${bioGrade.value} (${bioBody.value})` : "",
+        "CHEMISTRY": chemGrade.value ? `${chemGrade.value} (${chemBody.value})` : "",
+        "PHYSICS": phyGrade.value ? `${phyGrade.value} (${phyBody.value})` : "",
+        "REMARKS": form.remarks.value
       }];
 
       // 3️⃣ Send to SheetBest
       const sheetRes = await fetch(SHEETBEST_URL, {
         method: "POST",
         mode: "cors",
-        body: JSON.stringify(data) // wrap in array
+        body: JSON.stringify(data) // must be an array
       });
 
       if (!sheetRes.ok) throw "SheetBest rejected the data.";
 
-      // 4️⃣ Success message
+      // 4️⃣ Success screen
       form.innerHTML = `
         <div style="text-align:center;padding:40px">
           <h2 style="color:green">✅ Submission Successful</h2>
