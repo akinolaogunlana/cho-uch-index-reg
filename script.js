@@ -137,6 +137,61 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+// Live duplicate check
+async function checkDuplicateLive() {
+  const surnameInput = form.surname;
+  const firstnameInput = form.firstname;
+  const submitBtn = form.querySelector("button[type='submit']");
+
+  // Create warning message element
+  let warning = document.getElementById("duplicateWarning");
+  if (!warning) {
+    warning = document.createElement("div");
+    warning.id = "duplicateWarning";
+    warning.style.color = "red";
+    warning.style.marginTop = "5px";
+    surnameInput.parentNode.insertBefore(warning, submitBtn);
+  }
+
+  async function validate() {
+    const s = surnameInput.value.trim().toUpperCase();
+    const f = firstnameInput.value.trim().toUpperCase();
+    if (!s && !f) {
+      warning.textContent = "";
+      submitBtn.disabled = false;
+      surnameInput.style.borderColor = "";
+      firstnameInput.style.borderColor = "";
+      return;
+    }
+
+    try {
+      const res = await fetch(SHEETBEST_URL);
+      const allData = await res.json();
+      const duplicate = allData.find(r => r.SURNAME === s && r.FIRSTNAME === f);
+
+      if (duplicate) {
+        warning.textContent = "❌ Duplicate entry detected!";
+        submitBtn.disabled = true;
+        surnameInput.style.borderColor = "red";
+        firstnameInput.style.borderColor = "red";
+      } else {
+        warning.textContent = "";
+        submitBtn.disabled = false;
+        surnameInput.style.borderColor = "";
+        firstnameInput.style.borderColor = "";
+      }
+    } catch (err) {
+      console.error("Failed to check duplicates:", err);
+    }
+  }
+
+  surnameInput.addEventListener("input", validate);
+  firstnameInput.addEventListener("input", validate);
+}
+
+// Call the live duplicate checker
+checkDuplicateLive();
+
   // Form submission with duplicate check
   form.addEventListener("submit", async function(e){
     e.preventDefault();
