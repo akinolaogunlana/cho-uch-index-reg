@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>CHO INDEXING FORM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,14 +13,14 @@
 <form id="indexForm" enctype="multipart/form-data">
 
   <!-- Personal Information -->
-  <input name="surname" placeholder="SURNAME" required><br>
-  <input name="firstname" placeholder="FIRSTNAME" required><br>
-  <input name="othernames" placeholder="OTHERNAMES"><br>
+  <input type="text" name="surname" placeholder="SURNAME" required><br>
+  <input type="text" name="firstname" placeholder="FIRSTNAME" required><br>
+  <input type="text" name="othernames" placeholder="OTHERNAMES"><br>
 
   <label for="passport">PASSPORT</label><br>
-  <input type="file" id="passport" accept="image/*" required><br>
+  <input type="file" id="passport" accept="image/jpeg,image/png" required><br>
 
-  <input name="cadre" value="CHO" readonly><br>
+  <input type="text" name="cadre" value="CHO" readonly><br>
 
   <select name="gender" required>
     <option value="">SELECT GENDER</option>
@@ -27,9 +28,9 @@
     <option value="FEMALE">FEMALE</option>
   </select><br>
 
-  <input name="bloodgroup" placeholder="BLOOD GROUP"><br>
-  <input name="state" placeholder="STATE"><br>
-  <input name="lga" placeholder="LGA / CITY/TOWN"><br>
+  <input type="text" name="bloodgroup" placeholder="BLOOD GROUP"><br>
+  <input type="text" name="state" placeholder="STATE"><br>
+  <input type="text" name="lga" placeholder="LGA / CITY/TOWN"><br>
 
   <label for="dob">DATE OF BIRTH</label><br>
   <input type="date" name="dob" id="dob" required><br>
@@ -44,46 +45,46 @@
     <option value="NECO / WAEC">NECO / WAEC (Combined)</option>
   </select><br>
 
-  <input name="olevel_year" placeholder="O-LEVEL YEAR(S)"><br>
-  <input name="olevel_exam" placeholder="O-LEVEL EXAM NUMBER"><br>
+  <input type="text" name="olevel_year" placeholder="O-LEVEL YEAR(S)"><br>
+  <input type="text" name="olevel_exam" placeholder="O-LEVEL EXAM NUMBER"><br>
 
   <!-- A'LEVEL / PROFESSIONAL -->
-  <input name="alevel_type" placeholder="A-LEVEL TYPE"><br>
-  <input name="alevel_year" placeholder="A-LEVEL YEAR"><br>
-  <input name="pro_cert" placeholder="PROFESSIONAL CERTIFICATE NUMBER"><br>
+  <input type="text" name="alevel_type" placeholder="A-LEVEL TYPE"><br>
+  <input type="text" name="alevel_year" placeholder="A-LEVEL YEAR"><br>
+  <input type="text" name="pro_cert" placeholder="PROFESSIONAL CERTIFICATE NUMBER"><br>
 
   <!-- SUBJECTS -->
-  <input id="engGrade" placeholder="ENGLISH GRADE" required>
+  <input type="text" id="engGrade" placeholder="ENGLISH GRADE" required>
   <select id="engBody">
     <option value="WAEC">WAEC</option>
     <option value="NECO">NECO</option>
   </select><br>
 
-  <input id="mathGrade" placeholder="MATHEMATICS GRADE" required>
+  <input type="text" id="mathGrade" placeholder="MATHEMATICS GRADE" required>
   <select id="mathBody">
     <option value="WAEC">WAEC</option>
     <option value="NECO">NECO</option>
   </select><br>
 
-  <input id="bioGrade" placeholder="BIOLOGY GRADE">
+  <input type="text" id="bioGrade" placeholder="BIOLOGY GRADE">
   <select id="bioBody">
     <option value="WAEC">WAEC</option>
     <option value="NECO">NECO</option>
   </select><br>
 
-  <input id="chemGrade" placeholder="CHEMISTRY GRADE">
+  <input type="text" id="chemGrade" placeholder="CHEMISTRY GRADE">
   <select id="chemBody">
     <option value="WAEC">WAEC</option>
     <option value="NECO">NECO</option>
   </select><br>
 
-  <input id="phyGrade" placeholder="PHYSICS GRADE">
+  <input type="text" id="phyGrade" placeholder="PHYSICS GRADE">
   <select id="phyBody">
     <option value="WAEC">WAEC</option>
     <option value="NECO">NECO</option>
   </select><br>
 
-  <input name="remarks" placeholder="REMARKS"><br><br>
+  <input type="text" name="remarks" placeholder="REMARKS"><br><br>
 
   <button type="submit">SUBMIT</button>
 
