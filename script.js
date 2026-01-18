@@ -14,15 +14,14 @@ document.addEventListener("DOMContentLoaded", function () {
     submitBtn.innerText = "Uploading passport...";
 
     try {
-      const passportInput = document.getElementById("passport");
-      const file = passportInput.files[0];
-
+      const file = document.getElementById("passport").files[0];
       if (!file) throw "Passport photo is required.";
 
       if (file.size > 5 * 1024 * 1024) {
-        throw "Image too large. Please use photo under 5MB.";
+        throw "Image too large. Use photo under 5MB.";
       }
 
+      // 1. Upload to Cloudinary
       const cloudForm = new FormData();
       cloudForm.append("file", file);
       cloudForm.append("upload_preset", CLOUDINARY_PRESET);
@@ -35,10 +34,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!cloudRes.ok) throw "Cloudinary upload failed.";
 
       const cloudData = await cloudRes.json();
-      if (!cloudData.secure_url) throw "Invalid upload response.";
+      if (!cloudData.secure_url) throw "Invalid Cloudinary response.";
 
       submitBtn.innerText = "Saving data...";
 
+      // 2. Prepare SheetBest data
       const data = {
         SURNAME: form.surname.value.trim().toUpperCase(),
         FIRSTNAME: form.firstname.value.trim().toUpperCase(),
@@ -64,14 +64,16 @@ document.addEventListener("DOMContentLoaded", function () {
         PHYSICS: phyGrade.value ? `${phyGrade.value} (${phyBody.value})` : ""
       };
 
+      // 3. Send to SheetBest (CORS SAFE MODE)
       const sheetRes = await fetch(SHEETBEST_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        mode: "cors",
         body: JSON.stringify(data)
       });
 
-      if (!sheetRes.ok) throw "Failed to save form data.";
+      if (!sheetRes.ok) throw "SheetBest rejected the data.";
 
+      // 4. Success screen
       form.innerHTML = `
         <div style="text-align:center;padding:40px">
           <h2 style="color:green">✅ Submission Successful</h2>
