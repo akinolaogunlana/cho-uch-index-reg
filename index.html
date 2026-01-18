@@ -5,6 +5,11 @@
   <title>CHO INDEXING FORM</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
+  
+  <!-- PDF & ZIP Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.6.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
 
@@ -29,8 +34,6 @@
 
   <input name="bloodgroup" placeholder="BLOOD GROUP">
   <input name="state" placeholder="STATE">
-
-  <!-- ✅ FIXED NAME -->
   <input name="lga_city_town" placeholder="LGA / CITY/TOWN">
 
   <label>DATE OF BIRTH</label>
@@ -82,42 +85,80 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("indexForm");
   const btn = form.querySelector("button");
 
-  form.addEventListener("submit", async (e) => {
+  // Passport preview
+  const previewContainer = document.createElement("div");
+  previewContainer.style.textAlign = "center";
+  previewContainer.style.margin = "15px 0";
+  form.insertBefore(previewContainer, btn);
+
+  let passportDataUrl = "";
+
+  document.getElementById("passport").addEventListener("change", function () {
+    previewContainer.innerHTML = "";
+    const file = this.files[0];
+    if (!file) return;
+
+    if (!["image/jpeg","image/png"].includes(file.type)) {
+      alert("Only JPG or PNG allowed"); this.value = ""; return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be under 5MB"); this.value = ""; return;
+    }
+
+    const img = document.createElement("img");
+    img.style.maxWidth = "150px";
+    img.style.borderRadius = "8px";
+    img.style.boxShadow = "0 4px 15px rgba(0,0,0,0.15)";
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      passportDataUrl = canvas.toDataURL("image/jpeg");
+    };
+    previewContainer.appendChild(img);
+  });
+
+  // Form submission
+  form.addEventListener("submit", async e => {
     e.preventDefault();
     btn.disabled = true;
-    btn.innerText = "Uploading passport...";
+    btn.innerText = "Checking duplicates...";
 
     try {
-      const file = passport.files[0];
-      if (!file) throw "Passport required";
+      const surname = form.surname.value.trim().toUpperCase();
+      const firstname = form.firstname.value.trim().toUpperCase();
+      const dob = form.dob.value;
 
-      if (!["image/jpeg","image/png"].includes(file.type))
-        throw "Only JPG or PNG images allowed";
+      // Prevent duplicates
+      const existingRes = await fetch(SHEETBEST_URL);
+      if (!existingRes.ok) throw "Failed to fetch existing submissions.";
+      const existingData = await existingRes.json();
+      const duplicate = existingData.find(row => 
+        row.SURNAME === surname && row.FIRSTNAME === firstname && row.DATE_OF_BIRTH === dob
+      );
+      if (duplicate) {
+        alert("Duplicate submission detected."); 
+        btn.disabled = false; btn.innerText = "SUBMIT"; return;
+      }
 
-      if (file.size > 5 * 1024 * 1024)
-        throw "Image must be under 5MB";
+      btn.innerText = "Uploading passport...";
 
-      /* Upload to Cloudinary */
+      const file = document.getElementById("passport").files[0];
       const cloudForm = new FormData();
       cloudForm.append("file", file);
       cloudForm.append("upload_preset", CLOUDINARY_PRESET);
 
-      const cloudRes = await fetch(CLOUDINARY_URL, {
-        method: "POST",
-        body: cloudForm
-      });
-
-      if (!cloudRes.ok) throw "Cloudinary upload failed";
-
+      const cloudRes = await fetch(CLOUDINARY_URL, { method: "POST", body: cloudForm });
+      if (!cloudRes.ok) throw "Cloudinary upload failed.";
       const cloudData = await cloudRes.json();
-      if (!cloudData.secure_url) throw "Image upload error";
 
       btn.innerText = "Saving data...";
 
-      /* EXACT HEADER MATCH */
       const data = [{
-        SURNAME: form.surname.value.trim().toUpperCase(),
-        FIRSTNAME: form.firstname.value.trim().toUpperCase(),
+        SURNAME: surname,
+        FIRSTNAME: firstname,
         OTHERNAMES: form.othernames.value.trim().toUpperCase(),
         PASSPORT: cloudData.secure_url,
         CADRE: form.cadre.value,
@@ -125,15 +166,15 @@ document.addEventListener("DOMContentLoaded", () => {
         BLOOD_GROUP: form.bloodgroup.value,
         STATE: form.state.value,
         LGA_CITY_TOWN: form.lga_city_town.value,
-        DATE_OF_BIRTH: form.dob.value,
+        DATE_OF_BIRTH: dob,
         OLEVEL_TYPE: form.olevel_type.value,
         OLEVEL_YEAR: form.olevel_year.value,
         OLEVEL_EXAM_NUMBER: form.olevel_exam.value,
         ALEVEL_TYPE: form.alevel_type.value,
         ALEVEL_YEAR: form.alevel_year.value,
         PROFESSIONAL_CERTIFICATE_NUMBER: form.pro_cert.value,
-        ENGLISH: `${engGrade.value} (${engBody.value})`,
-        MATHEMATICS: `${mathGrade.value} (${mathBody.value})`,
+        ENGLISH: `${document.getElementById("engGrade").value} (${document.getElementById("engBody").value})`,
+        MATHEMATICS: `${document.getElementById("mathGrade").value} (${document.getElementById("mathBody").value})`,
         BIOLOGY: bioGrade.value ? `${bioGrade.value} (${bioBody.value})` : "",
         CHEMISTRY: chemGrade.value ? `${chemGrade.value} (${chemBody.value})` : "",
         PHYSICS: phyGrade.value ? `${phyGrade.value} (${phyBody.value})` : "",
@@ -142,25 +183,57 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const res = await fetch(SHEETBEST_URL, {
         method: "POST",
-        headers: {"Content-Type":"application/json"},
+        headers: { "Content-Type":"application/json" },
         body: JSON.stringify(data)
       });
-
       if (!res.ok) throw "Sheet save failed";
 
+      // Success screen + PDF & ZIP buttons
       form.innerHTML = `
         <div style="text-align:center;padding:40px">
-          <h2 style="color:green">✅ Submission Successful</h2>
+          <h2 style="color:#2ecc71">✅ Submission Successful</h2>
           <p>Your information has been saved successfully.</p>
-          <button onclick="location.reload()">Submit Another</button>
+          <button id="downloadPdfBtn">Download Your PDF Copy</button>
+          <button id="downloadZipBtn" style="margin-top:10px;">Download All Passports (ZIP)</button>
+          <button onclick="location.reload()" style="margin-top:10px;">Submit Another</button>
         </div>
       `;
 
+      // Download individual PDF
+      document.getElementById("downloadPdfBtn").addEventListener("click", () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        let y = 20;
+        doc.setFontSize(18);
+        doc.text("CHO Indexing Form", 105, y, { align: "center" });
+        y += 10;
+        if (passportDataUrl) doc.addImage(passportDataUrl, "JPEG", 80, y, 50, 50);
+        y += 60;
+        Object.entries(data[0]).forEach(([k,v]) => { doc.text(`${k}: ${v}`, 20, y); y+=8; if(y>280){doc.addPage(); y=20;} });
+        doc.save(`CHO_Form_${surname}_${firstname}.pdf`);
+      });
+
+      // Download all passports ZIP
+      document.getElementById("downloadZipBtn").addEventListener("click", async () => {
+        try {
+          const allRes = await fetch(SHEETBEST_URL);
+          const allData = await allRes.json();
+          const zip = new JSZip();
+          for (let row of allData) {
+            if (!row.PASSPORT) continue;
+            const imgRes = await fetch(row.PASSPORT);
+            const blob = await imgRes.blob();
+            zip.file(`${row.SURNAME}_${row.FIRSTNAME}.jpg`, blob);
+          }
+          const content = await zip.generateAsync({ type: "blob" });
+          saveAs(content, "All_Passports.zip");
+        } catch (err) {
+          alert("Failed to download ZIP."); console.error(err);
+        }
+      });
+
     } catch (err) {
-      alert(err);
-      btn.disabled = false;
-      btn.innerText = "SUBMIT";
-      console.error(err);
+      alert(err); btn.disabled = false; btn.innerText = "SUBMIT"; console.error(err);
     }
   });
 });
