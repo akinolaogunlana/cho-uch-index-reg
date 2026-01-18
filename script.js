@@ -1,13 +1,13 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
 
   const SHEETBEST_URL = "https://api.sheetbest.com/sheets/c610f771-67a2-4120-b4fa-c2d102aee546";
-  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/444391351669479/image/upload";
+  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
   const CLOUDINARY_PRESET = "cho_passports";
 
   const form = document.getElementById("indexForm");
   const submitBtn = form.querySelector("button");
 
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     submitBtn.disabled = true;
@@ -15,18 +15,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const passportInput = document.getElementById("passport");
-      if (!passportInput.files.length) throw "Passport required";
+      const file = passportInput.files[0];
 
-      const originalFile = passportInput.files[0];
+      if (!file) throw "Passport photo is required.";
 
-      // Reject very large files early
-      if (originalFile.size > 5 * 1024 * 1024) {
-        throw "Image too large. Please select a photo under 5MB.";
+      if (file.size > 5 * 1024 * 1024) {
+        throw "Image too large. Please use photo under 5MB.";
       }
 
-      // Upload to Cloudinary
       const cloudForm = new FormData();
-      cloudForm.append("file", originalFile);
+      cloudForm.append("file", file);
       cloudForm.append("upload_preset", CLOUDINARY_PRESET);
 
       const cloudRes = await fetch(CLOUDINARY_URL, {
@@ -34,20 +32,18 @@ document.addEventListener("DOMContentLoaded", () => {
         body: cloudForm
       });
 
-      if (!cloudRes.ok) throw "Cloudinary upload failed";
+      if (!cloudRes.ok) throw "Cloudinary upload failed.";
 
       const cloudData = await cloudRes.json();
-      if (!cloudData.secure_url) throw "No image URL returned";
+      if (!cloudData.secure_url) throw "Invalid upload response.";
 
-      const passportUrl = cloudData.secure_url;
-
-      submitBtn.innerText = "Saving form data...";
+      submitBtn.innerText = "Saving data...";
 
       const data = {
         SURNAME: form.surname.value.trim().toUpperCase(),
         FIRSTNAME: form.firstname.value.trim().toUpperCase(),
         OTHERNAMES: form.othernames.value.trim().toUpperCase(),
-        PASSPORT: passportUrl,
+        PASSPORT: cloudData.secure_url,
         CADRE: form.cadre.value,
         GENDER: form.gender.value,
         BLOOD_GROUP: form.bloodgroup.value,
@@ -74,21 +70,22 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify(data)
       });
 
-      if (!sheetRes.ok) throw "SheetBest save failed";
+      if (!sheetRes.ok) throw "Failed to save form data.";
 
       form.innerHTML = `
         <div style="text-align:center;padding:40px">
           <h2 style="color:green">✅ Submission Successful</h2>
-          <p>Your data has been saved successfully.</p>
+          <p>Your information has been saved successfully.</p>
           <button onclick="location.reload()">Submit Another</button>
         </div>
       `;
 
-    } catch (err) {
-      alert(err);
+    } catch (error) {
+      alert(error);
+      console.error(error);
       submitBtn.disabled = false;
       submitBtn.innerText = "SUBMIT";
-      console.error(err);
     }
   });
+
 });
