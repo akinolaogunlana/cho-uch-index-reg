@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CHO INDEXING – RETRIEVE & EDIT</title>
+  <title>CHO INDEXING – RETRIEVE, EDIT & SLIP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.6.1/jspdf.umd.min.js"></script>
 
   <style>
     body {
@@ -17,39 +17,29 @@
       text-align: center;
     }
     form {
-      max-width: 650px;
+      max-width: 700px;
       margin: auto;
       background: #fff;
       padding: 25px;
       border-radius: 10px;
       box-shadow: 0 5px 20px rgba(0,0,0,.1);
     }
-    input, select, button {
+    input, select, button, label {
       width: 100%;
       padding: 10px;
       margin-top: 10px;
+      box-sizing: border-box;
     }
     button {
       border: none;
       cursor: pointer;
       font-weight: bold;
     }
-    #retrieveBtn {
-      background: #1e88e5;
-      color: #fff;
-    }
-    #updateBtn {
-      background: #2ecc71;
-      color: #fff;
-    }
-    #downloadPDFBtn {
-      background: #4caf50;
-      color: #fff;
-      display: none;
-    }
-    hr {
-      margin: 25px 0;
-    }
+    #retrieveBtn { background: #1e88e5; color: #fff; }
+    #updateBtn { background: #2ecc71; color: #fff; }
+    #downloadPDFBtn { background: #4caf50; color: #fff; display: none; }
+    #previewContainer img { max-width: 120px; border-radius: 8px; margin-top: 10px; }
+    hr { margin: 25px 0; }
   </style>
 </head>
 
@@ -61,7 +51,6 @@
 
   <!-- 🔐 RETRIEVAL SECTION -->
   <input name="surname" placeholder="SURNAME" required>
-
   <select name="bloodgroup" required>
     <option value="">SELECT BLOOD GROUP</option>
     <option>A+</option><option>A-</option>
@@ -69,7 +58,6 @@
     <option>AB+</option><option>AB-</option>
     <option>O+</option><option>O-</option>
   </select>
-
   <select name="olevel_type" required>
     <option value="">SELECT O-LEVEL TYPE</option>
     <option>WAEC</option>
@@ -82,7 +70,6 @@
     <option>NABTEB / WAEC</option>
     <option>NABTEB / NECO</option>
   </select>
-
   <button type="button" id="retrieveBtn">🔍 RETRIEVE MY RECORD</button>
 
   <hr>
@@ -103,9 +90,13 @@
   <label>DATE OF BIRTH</label>
   <input type="date" name="dob">
 
+  <!-- Passport Upload -->
+  <label>PASSPORT (JPG/PNG, Max 5MB)</label>
+  <input type="file" id="passport" accept="image/jpeg,image/png">
+  <div id="previewContainer"></div>
+
   <input name="olevel_year" placeholder="O-LEVEL YEAR(S)">
   <input name="olevel_exam" placeholder="O-LEVEL EXAM NUMBER">
-
   <input name="alevel_type" placeholder="A-LEVEL TYPE">
   <input name="alevel_year" placeholder="A-LEVEL YEAR">
 
@@ -127,7 +118,6 @@
   <input name="remarks" placeholder="REMARKS">
 
   <button type="submit" id="updateBtn" disabled>✅ UPDATE MY INFORMATION</button>
-
   <button type="button" id="downloadPDFBtn">📄 DOWNLOAD MY SLIP (PDF)</button>
 
 </form>
@@ -140,58 +130,102 @@ const form = document.getElementById("indexForm");
 const retrieveBtn = document.getElementById("retrieveBtn");
 const updateBtn = document.getElementById("updateBtn");
 const downloadPDFBtn = document.getElementById("downloadPDFBtn");
+const passportInput = document.getElementById("passport");
+const previewContainer = document.getElementById("previewContainer");
 
 let recordId = null;
 let recordData = null;
+let passportDataUrl = "";
 
+// Format DOB
 function formatDOB(d){
   if(!d) return "";
   const x = new Date(d);
   return `${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}/${x.getFullYear()}`;
 }
 
+// ---------------- PASSPORT PREVIEW ----------------
+passportInput.addEventListener("change", () => {
+  previewContainer.innerHTML = "";
+  const file = passportInput.files[0];
+  if(!file) return;
+
+  if(!["image/jpeg","image/png"].includes(file.type)){ alert("Only JPG/PNG allowed"); passportInput.value=""; return; }
+  if(file.size>5*1024*1024){ alert("Max 5MB"); passportInput.value=""; return; }
+
+  const img = document.createElement("img");
+  img.src = URL.createObjectURL(file);
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext("2d").drawImage(img,0,0);
+    passportDataUrl = canvas.toDataURL("image/jpeg");
+  };
+  previewContainer.appendChild(img);
+});
+
+// ---------------- RETRIEVE ----------------
 retrieveBtn.onclick = async () => {
   const surname = form.surname.value.trim().toUpperCase();
   const blood = form.bloodgroup.value;
   const olevel = form.olevel_type.value;
 
-  if(!surname || !blood || !olevel){
-    alert("Please complete all retrieval fields");
-    return;
-  }
+  if(!surname || !blood || !olevel){ alert("Complete all retrieval fields"); return; }
 
-  const res = await fetch(SHEETBEST_URL);
-  const data = await res.json();
+  try{
+    const res = await fetch(SHEETBEST_URL);
+    const data = await res.json();
 
-  const found = data.find(r =>
-    r.SURNAME === surname &&
-    r.BLOOD_GROUP === blood &&
-    r.OLEVEL_TYPE === olevel
-  );
+    const found = data.find(r =>
+      r.SURNAME.toUpperCase() === surname &&
+      r.BLOOD_GROUP === blood &&
+      r.OLEVEL_TYPE === olevel
+    );
 
-  if(!found){
-    alert("❌ Record not found");
-    return;
-  }
+    if(!found){ alert("❌ Record not found"); return; }
 
-  recordId = found.id;
-  recordData = found;
+    recordId = found._id || found.id;
+    recordData = found;
 
-  // Lock identity fields
-  form.surname.disabled = true;
-  form.bloodgroup.disabled = true;
-  form.olevel_type.disabled = true;
+    // Lock retrieval fields
+    form.surname.disabled = true;
+    form.bloodgroup.disabled = true;
+    form.olevel_type.disabled = true;
 
-  Object.keys(found).forEach(k => {
-    if(form[k]) form[k].value = found[k];
-  });
+    // Populate form fields
+    const fields = ["firstname","othernames","gender","state","lga_city_town","dob","olevel_year","olevel_exam","alevel_type","alevel_year","remarks"];
+    fields.forEach(f => { if(form[f] && found[f.toUpperCase()]) form[f].value = found[f.toUpperCase()]; });
 
-  updateBtn.disabled = false;
-  downloadPDFBtn.style.display = "block";
+    // Populate grades
+    ["ENGLISH","MATHEMATICS","BIOLOGY","CHEMISTRY","PHYSICS"].forEach(sub => {
+      if(found[sub]){
+        const [v,b] = found[sub].split(" (");
+        if(sub==="ENGLISH"){ form.engGrade.value=v; if(b) form.engBody.value=b.replace(")",""); }
+        if(sub==="MATHEMATICS"){ form.mathGrade.value=v; if(b) form.mathBody.value=b.replace(")",""); }
+        if(sub==="BIOLOGY"){ form.bioGrade.value=v; if(b) form.bioBody.value=b.replace(")",""); }
+        if(sub==="CHEMISTRY"){ form.chemGrade.value=v; if(b) form.chemBody.value=b.replace(")",""); }
+        if(sub==="PHYSICS"){ form.phyGrade.value=v; if(b) form.phyBody.value=b.replace(")",""); }
+      }
+    });
 
-  alert("✅ Record retrieved successfully");
+    updateBtn.disabled = false;
+    downloadPDFBtn.style.display = "block";
+
+    // Show passport if exists
+    if(found.PASSPORT){
+      passportDataUrl = found.PASSPORT;
+      const img = document.createElement("img");
+      img.src = passportDataUrl;
+      previewContainer.innerHTML=""; previewContainer.appendChild(img);
+    }
+
+    alert("✅ Record retrieved successfully");
+
+  }catch(err){ console.error(err); alert("Error retrieving record."); }
 };
 
+// ---------------- UPDATE ----------------
 form.onsubmit = async e => {
   e.preventDefault();
   if(!recordId) return;
@@ -207,24 +241,31 @@ form.onsubmit = async e => {
     OLEVEL_EXAM_NUMBER: form.olevel_exam.value,
     ALEVEL_TYPE: form.alevel_type.value,
     ALEVEL_YEAR: form.alevel_year.value,
-    ENGLISH: `${engGrade.value} (${engBody.value})`,
-    MATHEMATICS: `${mathGrade.value} (${mathBody.value})`,
-    BIOLOGY: bioGrade.value ? `${bioGrade.value} (${bioBody.value})` : "",
-    CHEMISTRY: chemGrade.value ? `${chemGrade.value} (${chemBody.value})` : "",
-    PHYSICS: phyGrade.value ? `${phyGrade.value} (${phyBody.value})` : "",
-    REMARKS: form.remarks.value
+    ENGLISH: `${form.engGrade.value} (${form.engBody.value})`,
+    MATHEMATICS: `${form.mathGrade.value} (${form.mathBody.value})`,
+    BIOLOGY: form.bioGrade.value ? `${form.bioGrade.value} (${form.bioBody.value})` : "",
+    CHEMISTRY: form.chemGrade.value ? `${form.chemGrade.value} (${form.chemBody.value})` : "",
+    PHYSICS: form.phyGrade.value ? `${form.phyGrade.value} (${form.phyBody.value})` : "",
+    REMARKS: form.remarks.value,
+    PASSPORT: passportDataUrl
   };
 
-  await fetch(`${SHEETBEST_URL}/${recordId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  try{
+    await fetch(`${SHEETBEST_URL}/${recordId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  alert("✅ Information updated successfully");
+    recordData = {...recordData, ...payload};
+    alert("✅ Information updated successfully");
+
+  }catch(err){ console.error(err); alert("Error updating record."); }
 };
 
+// ---------------- DOWNLOAD SLIP ----------------
 downloadPDFBtn.onclick = () => {
+  if(!recordData) return;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   let y = 20;
@@ -233,10 +274,18 @@ downloadPDFBtn.onclick = () => {
   doc.text("CHO INDEXING SLIP", 105, y, { align: "center" });
   y += 10;
 
-  Object.entries(recordData).forEach(([k,v]) => {
-    if(v){
+  // Passport
+  if(recordData.PASSPORT){
+    doc.addImage(recordData.PASSPORT, "JPEG", 80, y, 50, 50);
+    y += 60;
+  }
+
+  const keysOrder = ["SURNAME","FIRSTNAME","OTHERNAMES","BLOOD_GROUP","OLEVEL_TYPE","GENDER","STATE","LGA_CITY_TOWN","DATE_OF_BIRTH","OLEVEL_YEAR","OLEVEL_EXAM_NUMBER","ALEVEL_TYPE","ALEVEL_YEAR","ENGLISH","MATHEMATICS","BIOLOGY","CHEMISTRY","PHYSICS","REMARKS"];
+
+  keysOrder.forEach(k => {
+    if(recordData[k]){
       doc.setFontSize(11);
-      doc.text(`${k.replace(/_/g," ")}: ${v}`, 15, y);
+      doc.text(`${k.replace(/_/g," ")}: ${recordData[k]}`, 15, y);
       y += 7;
       if(y > 280){ doc.addPage(); y = 20; }
     }
