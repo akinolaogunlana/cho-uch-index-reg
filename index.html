@@ -1,202 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>CHO INDEXING FORM</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>CHO INDEXING FORM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- External Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.6.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="stylesheet" href="style.css">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css">
-
-  <style>
-    /* Extra styling in case CSS not loaded */
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      padding: 20px;
-    }
-    h2, h3 {
-      text-align: center;
-    }
-    form {
-      max-width: 800px;
-      margin: auto;
-      background: #fff;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 5px 20px rgba(0,0,0,.1);
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    button {
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.2s ease;
-    }
-    button:hover { opacity: 0.9; }
-    .primary { background: #1e88e5; color: #fff; }
-    .success { background: #2ecc71; color: #fff; }
-    .dark { background: #333; color: #fff; }
-    .hidden { display: none; }
-    hr { margin: 25px 0; border: 0; border-top: 1px solid #ddd; }
-    #previewContainer img { max-width:150px; border-radius:8px; margin-top:10px; display:block; }
-    .section { margin-bottom: 20px; }
-    .flex-row { display:flex; gap:10px; flex-wrap:wrap; }
-    .flex-col { flex:1; }
-  </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.6.1/jsPDF.umd.min.js"></script>
 </head>
-
 <body>
 
-<h2>CHO INDEXING – REVIEW & EDIT YOUR DETAILS</h2>
+<h2>CHO INDEXING DATA COLLECTION</h2>
 
-<form id="indexForm" enctype="multipart/form-data">
+<!-- 🔍 REVIEW / EDIT -->
+<div style="border:1px solid #ccc;padding:15px;margin-bottom:20px">
+  <h3>Review / Edit My Submission</h3>
+  <input id="searchSurname" placeholder="SURNAME">
+  <select id="searchBlood">
+    <option value="">BLOOD GROUP</option>
+    <option>A+</option><option>A-</option>
+    <option>B+</option><option>B-</option>
+    <option>AB+</option><option>AB-</option>
+    <option>O+</option><option>O-</option>
+  </select>
+  <select id="searchOlevel">
+    <option value="">O-LEVEL TYPE</option>
+    <option>WAEC</option>
+    <option>NECO</option>
+    <option>NABTEB</option>
+    <option>WAEC / NECO</option>
+    <option>WAEC / WAEC</option>
+    <option>NECO / NECO</option>
+    <option>NABTEB / WAEC</option>
+  </select>
+  <button id="searchBtn">Search</button>
+  <p id="searchMsg" style="color:red"></p>
+</div>
 
-  <!-- ================= RETRIEVE ================= -->
-  <div class="section">
-    <h3>🔍 Retrieve Your Record</h3>
+<form id="indexForm">
 
-    <div class="flex-row">
-      <input name="firstname" placeholder="FIRST NAME (Used for retrieval)" required class="flex-col">
-      <select name="bloodgroup" required class="flex-col">
-        <option value="">SELECT BLOOD GROUP</option>
-        <option>A+</option><option>A-</option>
-        <option>B+</option><option>B-</option>
-        <option>AB+</option><option>AB-</option>
-        <option>O+</option><option>O-</option>
-      </select>
-      <select name="olevel_type" required class="flex-col">
-        <option value="">SELECT O-LEVEL TYPE</option>
-        <option>WAEC</option>
-        <option>NECO</option>
-        <option>NABTEB</option>
-        <option>WAEC / WAEC</option>
-        <option>NECO / NECO</option>
-        <option>NABTEB / NABTEB</option>
-        <option>WAEC / NECO</option>
-        <option>NABTEB / WAEC</option>
-        <option>NABTEB / NECO</option>
-      </select>
-    </div>
+<input name="surname" placeholder="SURNAME" required>
+<input name="firstname" placeholder="FIRSTNAME" required>
+<input name="othernames" placeholder="OTHERNAMES">
 
-    <button type="button" id="retrieveBtn" class="primary">🔍 RETRIEVE MY RECORD</button>
-  </div>
+<label>PASSPORT (Upload only if changing)</label>
+<input type="file" id="passport" accept="image/jpeg,image/png">
 
-  <hr>
+<input name="cadre" value="CHO" readonly>
 
-  <!-- ================= PERSONAL INFORMATION ================= -->
-  <div class="section">
-    <h3>✏️ Review & Edit Your Personal Details</h3>
+<select name="gender" required>
+  <option value="">SELECT GENDER</option>
+  <option>MALE</option>
+  <option>FEMALE</option>
+</select>
 
-    <div class="flex-row">
-      <input name="surname" placeholder="SURNAME" class="flex-col">
-      <input name="othernames" placeholder="OTHERNAMES" class="flex-col">
-    </div>
+<select name="bloodgroup" required>
+  <option value="">SELECT BLOOD GROUP</option>
+  <option>A+</option><option>A-</option>
+  <option>B+</option><option>B-</option>
+  <option>AB+</option><option>AB-</option>
+  <option>O+</option><option>O-</option>
+</select>
 
-    <div class="flex-row">
-      <select name="gender" class="flex-col">
-        <option value="">SELECT GENDER</option>
-        <option>MALE</option>
-        <option>FEMALE</option>
-      </select>
-      <input name="state" placeholder="STATE" class="flex-col">
-      <input name="lga_city_town" placeholder="LGA / CITY / TOWN" class="flex-col">
-    </div>
+<input name="state" placeholder="STATE">
+<input name="lga_city_town" placeholder="LGA / CITY/TOWN">
 
-    <label>DATE OF BIRTH (DD/MM/YYYY)</label>
-    <input name="dob" placeholder="e.g. 14/06/1998">
+<label>DATE OF BIRTH</label>
+<input type="date" name="dob" required>
 
-    <div class="flex-row">
-      <input name="cadre" placeholder="CADRE" class="flex-col">
-      <input name="remarks" placeholder="REMARKS" class="flex-col">
-    </div>
+<select name="olevel_type" required>
+  <option value="">SELECT O-LEVEL TYPE</option>
+  <option>WAEC</option>
+  <option>NECO</option>
+  <option>NABTEB</option>
+  <option>WAEC / NECO</option>
+  <option>WAEC / WAEC</option>
+  <option>NECO / NECO</option>
+  <option>NABTEB / WAEC</option>
+</select>
 
-    <label>UPLOAD / CHANGE PASSPORT (JPG / PNG)</label>
-    <input type="file" id="passport" accept="image/jpeg,image/png">
-    <div id="previewContainer"></div>
-  </div>
+<input name="olevel_year" placeholder="O-LEVEL YEAR(S)">
+<input name="olevel_exam" placeholder="O-LEVEL EXAM NUMBER">
 
-  <hr>
+<input name="remarks" placeholder="REMARKS">
 
-  <!-- ================= EDUCATION ================= -->
-  <div class="section">
-    <h3>📚 Educational Background</h3>
-
-    <div class="flex-row">
-      <input name="olevel_year" placeholder="O-LEVEL YEAR(S)" class="flex-col">
-      <input name="olevel_exam" placeholder="O-LEVEL EXAM NUMBER" class="flex-col">
-    </div>
-
-    <div class="flex-row">
-      <input name="alevel_type" placeholder="A-LEVEL TYPE" class="flex-col">
-      <input name="alevel_year" placeholder="A-LEVEL YEAR" class="flex-col">
-    </div>
-  </div>
-
-  <hr>
-
-  <!-- ================= SUBJECT GRADES ================= -->
-  <div class="section">
-    <h3>📝 Subject Grades</h3>
-
-    <div class="flex-row">
-      <input id="engGrade" placeholder="ENGLISH GRADE" class="flex-col">
-      <select id="engBody" class="flex-col"><option>WAEC</option><option>NECO</option><option>NABTEB</option></select>
-    </div>
-
-    <div class="flex-row">
-      <input id="mathGrade" placeholder="MATHEMATICS GRADE" class="flex-col">
-      <select id="mathBody" class="flex-col"><option>WAEC</option><option>NECO</option><option>NABTEB</option></select>
-    </div>
-
-    <div class="flex-row">
-      <input id="bioGrade" placeholder="BIOLOGY GRADE" class="flex-col">
-      <select id="bioBody" class="flex-col"><option>WAEC</option><option>NECO</option><option>NABTEB</option></select>
-    </div>
-
-    <div class="flex-row">
-      <input id="chemGrade" placeholder="CHEMISTRY GRADE" class="flex-col">
-      <select id="chemBody" class="flex-col"><option>WAEC</option><option>NECO</option><option>NABTEB</option></select>
-    </div>
-
-    <div class="flex-row">
-      <input id="phyGrade" placeholder="PHYSICS GRADE" class="flex-col">
-      <select id="phyBody" class="flex-col"><option>WAEC</option><option>NECO</option><option>NABTEB</option></select>
-    </div>
-
-  </div>
-
-  <hr>
-
-  <!-- ================= ACTION BUTTONS ================= -->
-  <div class="section flex-row">
-    <button type="submit" id="submitBtn" class="success flex-col">✅ SAVE / UPDATE MY INFORMATION</button>
-    <button type="button" id="downloadPDFBtn" class="success hidden flex-col">📄 DOWNLOAD MY SLIP (PDF)</button>
-  </div>
-
-  <div class="section flex-row">
-    <button type="button" id="adminLoginBtn" class="dark flex-col">🔒 ADMIN LOGIN</button>
-    <button type="button" id="downloadZipBtn" class="hidden flex-col">📦 DOWNLOAD ALL PASSPORTS (ZIP)</button>
-  </div>
+<button type="submit">SAVE / UPDATE</button>
+<button type="button" id="downloadPDFBtn" style="background:#4caf50;color:#fff">
+Download Slip (PDF)
+</button>
 
 </form>
 
-<!-- MAIN SCRIPT -->
-<script src="script.js"></script>
+<script>
+const SHEETBEST_URL = "https://api.sheetbest.com/sheets/ceb9eddc-af9a-473a-9a32-f52c21c7f72b";
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
+const CLOUDINARY_PRESET = "cho_passports";
+
+let currentRowId = null;
+let passportURL = "";
+
+searchBtn.onclick = async () => {
+  const s = searchSurname.value.trim().toUpperCase();
+  const b = searchBlood.value;
+  const o = searchOlevel.value;
+  searchMsg.textContent = "";
+
+  if (!s || !b || !o) {
+    searchMsg.textContent = "⚠️ Fill all search fields";
+    return;
+  }
+
+  const res = await fetch(SHEETBEST_URL);
+  const data = await res.json();
+
+  const record = data.find(r =>
+    r.SURNAME === s &&
+    r.BLOOD_GROUP === b &&
+    r.OLEVEL_TYPE === o
+  );
+
+  if (!record) {
+    searchMsg.textContent = "❌ Record not found";
+    return;
+  }
+
+  currentRowId = record.id;
+  passportURL = record.PASSPORT;
+
+  for (const key in record) {
+    if (indexForm[key]) indexForm[key].value = record[key];
+  }
+
+  alert("✅ Record loaded. You can now edit.");
+};
+
+indexForm.onsubmit = async e => {
+  e.preventDefault();
+
+  let newPassport = passportURL;
+  if (passport.files[0]) {
+    const fd = new FormData();
+    fd.append("file", passport.files[0]);
+    fd.append("upload_preset", CLOUDINARY_PRESET);
+    const up = await fetch(CLOUDINARY_URL, { method: "POST", body: fd });
+    newPassport = (await up.json()).secure_url;
+  }
+
+  const payload = {
+    SURNAME: surname.value.toUpperCase(),
+    FIRSTNAME: firstname.value.toUpperCase(),
+    OTHERNAMES: othernames.value.toUpperCase(),
+    PASSPORT: newPassport,
+    CADRE: "CHO",
+    GENDER: gender.value,
+    BLOOD_GROUP: bloodgroup.value,
+    STATE: state.value,
+    LGA_CITY_TOWN: lga_city_town.value,
+    DATE_OF_BIRTH: dob.value,
+    OLEVEL_TYPE: olevel_type.value,
+    OLEVEL_YEAR: olevel_year.value,
+    OLEVEL_EXAM_NUMBER: olevel_exam.value,
+    REMARKS: remarks.value
+  };
+
+  const method = currentRowId ? "PUT" : "POST";
+  const url = currentRowId ? `${SHEETBEST_URL}/${currentRowId}` : SHEETBEST_URL;
+
+  await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify([payload])
+  });
+
+  alert("✅ Information saved successfully");
+};
+
+downloadPDFBtn.onclick = () => {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  let y = 20;
+  pdf.text("CHO INDEXING SLIP", 105, y, { align: "center" });
+  y += 15;
+
+  [...indexForm.elements].forEach(el => {
+    if (el.name && el.type !== "file") {
+      pdf.text(`${el.name.toUpperCase()}: ${el.value}`, 20, y);
+      y += 8;
+    }
+  });
+
+  pdf.save(`CHO_SLIP_${surname.value}_${bloodgroup.value}_${olevel_type.value}.pdf`);
+};
+</script>
 
 </body>
 </html>
