@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   let passportDataUrl = "";
-  let recordKey = null; // combination of Surname + Blood + OLevel
+  let recordId = null; // 🔑 store the Sheetbest row id for updates
 
   // ================= PASSPORT PREVIEW =================
   $("passport").addEventListener("change", function () {
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     previewContainer.innerHTML = "";
     previewContainer.appendChild(img);
 
-    passportDataUrl = img.src;
+    passportDataUrl = img.src; // temporarily store preview
   });
 
   // ================= SEARCH =================
@@ -60,69 +60,74 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const res = await fetch(SHEETBEST_URL);
-    const data = await res.json();
+    try {
+      const res = await fetch(SHEETBEST_URL);
+      const data = await res.json();
 
-    const record = data.find(r =>
-      r.SURNAME?.toUpperCase() === surname &&
-      r.BLOOD_GROUP === blood &&
-      r.OLEVEL_TYPE === olevel
-    );
+      const record = data.find(r =>
+        r.SURNAME?.toUpperCase() === surname &&
+        r.BLOOD_GROUP === blood &&
+        r.OLEVEL_TYPE === olevel
+      );
 
-    if (!record) {
-      alert("No record found.");
-      return;
-    }
-
-    // ✅ Store combination as key for update
-    recordKey = { SURNAME: surname, BLOOD_GROUP: blood, OLEVEL_TYPE: olevel };
-
-    // ===== NORMAL FIELDS =====
-    for (let el of form.elements) {
-      if (!el.name) continue;
-      const key = el.name.toUpperCase();
-      if (record[key] !== undefined) el.value = record[key];
-    }
-
-    // ===== SUBJECTS =====
-    Object.keys(subjects).forEach(sub => {
-      const value = record[sub];
-      const g = subjects[sub].grade;
-      const b = subjects[sub].body;
-
-      if (!g || !b) return;
-
-      if (!value) {
-        g.value = "";
-        b.value = "";
+      if (!record) {
+        alert("No record found.");
         return;
       }
 
-      const match = value.match(/^(.+?)\s*\((.+?)\)$/);
-      if (match) {
-        g.value = match[1].trim();
-        b.value = match[2].trim();
-      } else {
-        g.value = value.trim();
-        b.value = "";
+      // ✅ Store the Sheetbest row id for update
+      recordId = record.id;
+
+      // ===== NORMAL FIELDS =====
+      for (let el of form.elements) {
+        if (!el.name) continue;
+        const key = el.name.toUpperCase();
+        if (record[key] !== undefined) el.value = record[key];
       }
-    });
 
-    // ===== PASSPORT =====
-    if (record.PASSPORT) {
-      passportDataUrl = record.PASSPORT;
-      previewContainer.innerHTML =
-        `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
+      // ===== SUBJECTS =====
+      Object.keys(subjects).forEach(sub => {
+        const value = record[sub];
+        const g = subjects[sub].grade;
+        const b = subjects[sub].body;
+
+        if (!g || !b) return;
+
+        if (!value) {
+          g.value = "";
+          b.value = "";
+          return;
+        }
+
+        const match = value.match(/^(.+?)\s*\((.+?)\)$/);
+        if (match) {
+          g.value = match[1].trim();
+          b.value = match[2].trim();
+        } else {
+          g.value = value.trim();
+          b.value = "";
+        }
+      });
+
+      // ===== PASSPORT =====
+      if (record.PASSPORT) {
+        passportDataUrl = record.PASSPORT;
+        previewContainer.innerHTML =
+          `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
+      }
+
+      alert("✅ Record loaded successfully");
+    } catch (err) {
+      console.error(err);
+      alert("ERROR: " + err);
     }
-
-    alert("✅ Record loaded successfully");
   });
 
-  // ================= SUBMIT =================
+  // ================= SUBMIT / UPDATE =================
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    if (!recordKey) {
+    if (!recordId) {
       alert("Please search and load a record first. Cannot update a non-existing record.");
       return;
     }
@@ -172,10 +177,8 @@ document.addEventListener("DOMContentLoaded", () => {
         record[sub] = g ? `${g} (${b})` : "";
       });
 
-      // ===== PATCH using combination key =====
-      const query = `?SURNAME=${encodeURIComponent(recordKey.SURNAME)}&BLOOD_GROUP=${encodeURIComponent(recordKey.BLOOD_GROUP)}&OLEVEL_TYPE=${encodeURIComponent(recordKey.OLEVEL_TYPE)}`;
-
-      await fetch(`${SHEETBEST_URL}${query}`, {
+      // ===== PATCH using the Sheetbest row id =====
+      await fetch(`${SHEETBEST_URL}/${recordId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(record)
