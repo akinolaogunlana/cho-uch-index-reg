@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <title>CHO INDEXING FORM</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="style.css">
 
+  <!-- PDF & ZIP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.6.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,144 +16,162 @@
 
 <h2>CHO INDEXING DATA COLLECTION</h2>
 
-<!-- ---------------- Search Section ---------------- -->
+<!-- ================= SEARCH ================= -->
 <h3>🔍 Find Your Submission</h3>
-<input id="searchSurname" placeholder="SURNAME" required>
-<select id="searchBloodGroup" required>
-  <option value="">SELECT BLOOD GROUP</option>
-  <option value="A+">A+</option>
-  <option value="A-">A-</option>
-  <option value="B+">B+</option>
-  <option value="B-">B-</option>
-  <option value="AB+">AB+</option>
-  <option value="AB-">AB-</option>
-  <option value="O+">O+</option>
-  <option value="O-">O-</option>
-</select>
-<select id="searchOlevelType" required>
-  <option value="">SELECT O-LEVEL TYPE</option>
-  <option value="WAEC">WAEC</option>
-  <option value="NECO">NECO</option>
-  <option value="NABTEB">NABTEB</option>
-  <option value="WAEC / WAEC">WAEC / WAEC</option>
-  <option value="NECO / NECO">NECO / NECO</option>
-  <option value="NABTEB / NABTEB">NABTEB / NABTEB</option>
-  <option value="WAEC / NECO">WAEC / NECO</option>
-  <option value="NABTEB / WAEC">NABTEB / WAEC</option>
-  <option value="NABTEB / NECO">NABTEB / NECO</option>
-</select>
-<button type="button" id="searchBtn">Find My Record</button>
-<div id="searchWarning" style="color:red;margin-top:5px;"></div>
 
-<!-- ---------------- Form Section ---------------- -->
-<form id="indexForm" enctype="multipart/form-data" style="margin-top:20px;">
+<input id="searchSurname" placeholder="SURNAME">
+<select id="searchBloodGroup">
+  <option value="">SELECT BLOOD GROUP</option>
+  <option>A+</option><option>A-</option>
+  <option>B+</option><option>B-</option>
+  <option>AB+</option><option>AB-</option>
+  <option>O+</option><option>O-</option>
+</select>
+
+<select id="searchOlevelType">
+  <option value="">SELECT O-LEVEL TYPE</option>
+  <option>WAEC</option>
+  <option>NECO</option>
+  <option>NABTEB</option>
+  <option>WAEC / WAEC</option>
+  <option>NECO / NECO</option>
+  <option>NABTEB / NABTEB</option>
+  <option>WAEC / NECO</option>
+  <option>NABTEB / WAEC</option>
+  <option>NABTEB / NECO</option>
+</select>
+
+<button type="button" id="searchBtn">Find My Record</button>
+<div id="searchWarning" style="color:red;margin-top:6px;"></div>
+
+<hr>
+
+<!-- ================= FORM ================= -->
+<form id="indexForm" enctype="multipart/form-data">
 
   <input name="surname" placeholder="SURNAME" required>
-  <input name="firstname" placeholder="FIRSTNAME" required>
-  <input name="othernames" placeholder="OTHERNAMES">
+  <input name="firstname" placeholder="FIRST NAME" required>
+  <input name="othernames" placeholder="OTHER NAMES">
 
-  <label>PASSPORT (JPG / PNG, Max 5MB)</label>
+  <!-- Passport -->
+  <label>Passport (JPG / PNG only – max 5MB)</label>
   <input type="file" id="passport" accept="image/jpeg,image/png">
 
   <input name="cadre" value="CHO" readonly>
 
+  <!-- Gender -->
   <select name="gender" required>
     <option value="">SELECT GENDER</option>
-    <option value="MALE">MALE</option>
-    <option value="FEMALE">FEMALE</option>
+    <option>MALE</option>
+    <option>FEMALE</option>
   </select>
 
-  <select name="bloodgroup" required>
+  <!-- Blood group -->
+  <select name="blood_group" required>
     <option value="">SELECT BLOOD GROUP</option>
-    <option value="A+">A+</option>
-    <option value="A-">A-</option>
-    <option value="B+">B+</option>
-    <option value="B-">B-</option>
-    <option value="AB+">AB+</option>
-    <option value="AB-">AB-</option>
-    <option value="O+">O+</option>
-    <option value="O-">O-</option>
+    <option>A+</option><option>A-</option>
+    <option>B+</option><option>B-</option>
+    <option>AB+</option><option>AB-</option>
+    <option>O+</option><option>O-</option>
   </select>
 
   <input name="state" placeholder="STATE">
-  <input name="lga_city_town" placeholder="LGA / CITY/TOWN">
+  <input name="lga_city_town" placeholder="LGA / CITY / TOWN">
 
-  <label>DATE OF BIRTH (MM/DD/YYYY)</label>
-  <input type="text" name="dob" placeholder="MM/DD/YYYY" required>
+  <!-- DOB -->
+  <label>Date of Birth (DD/MM/YYYY)</label>
+  <input name="date_of_birth" placeholder="DD/MM/YYYY" required>
 
+  <!-- O-Level -->
   <select name="olevel_type" required>
     <option value="">SELECT O-LEVEL TYPE</option>
-    <option value="WAEC">WAEC</option>
-    <option value="NECO">NECO</option>
-    <option value="NABTEB">NABTEB</option>
-    <option value="WAEC / WAEC">WAEC / WAEC</option>
-    <option value="NECO / NECO">NECO / NECO</option>
-    <option value="NABTEB / NABTEB">NABTEB / NABTEB</option>
-    <option value="WAEC / NECO">WAEC / NECO</option>
-    <option value="NABTEB / WAEC">NABTEB / WAEC</option>
-    <option value="NABTEB / NECO">NABTEB / NECO</option>
+    <option>WAEC</option>
+    <option>NECO</option>
+    <option>NABTEB</option>
+    <option>WAEC / WAEC</option>
+    <option>NECO / NECO</option>
+    <option>NABTEB / NABTEB</option>
+    <option>WAEC / NECO</option>
+    <option>NABTEB / WAEC</option>
+    <option>NABTEB / NECO</option>
   </select>
 
   <input name="olevel_year" placeholder="O-LEVEL YEAR(S)">
-  <input name="olevel_exam" placeholder="O-LEVEL EXAM NUMBER">
+  <input name="olevel_exam_number" placeholder="O-LEVEL EXAM NUMBER">
 
+  <!-- A-Level -->
   <input name="alevel_type" placeholder="A-LEVEL TYPE">
   <input name="alevel_year" placeholder="A-LEVEL YEAR">
-  <input name="pro_cert" placeholder="PROFESSIONAL CERTIFICATE NUMBER">
 
-  <!-- Subjects -->
-  <input id="engGrade" placeholder="ENGLISH GRADE" required>
+  <!-- Professional -->
+  <input name="professional_certificate_number"
+         placeholder="PROFESSIONAL CERTIFICATE NUMBER">
+
+  <hr>
+
+  <!-- ================= SUBJECTS ================= -->
+
+  <input name="english" id="engGrade" placeholder="ENGLISH GRADE">
   <select id="engBody">
     <option>WAEC</option>
     <option>NECO</option>
     <option>NABTEB</option>
   </select>
 
-  <input id="mathGrade" placeholder="MATHEMATICS GRADE" required>
+  <input name="mathematics" id="mathGrade" placeholder="MATHEMATICS GRADE">
   <select id="mathBody">
     <option>WAEC</option>
     <option>NECO</option>
     <option>NABTEB</option>
   </select>
 
-  <input id="bioGrade" placeholder="BIOLOGY GRADE">
+  <input name="biology" id="bioGrade" placeholder="BIOLOGY GRADE">
   <select id="bioBody">
     <option>WAEC</option>
     <option>NECO</option>
     <option>NABTEB</option>
   </select>
 
-  <input id="chemGrade" placeholder="CHEMISTRY GRADE">
+  <input name="chemistry" id="chemGrade" placeholder="CHEMISTRY GRADE">
   <select id="chemBody">
     <option>WAEC</option>
     <option>NECO</option>
     <option>NABTEB</option>
   </select>
 
-  <input id="phyGrade" placeholder="PHYSICS GRADE">
+  <input name="physics" id="phyGrade" placeholder="PHYSICS GRADE">
   <select id="phyBody">
     <option>WAEC</option>
     <option>NECO</option>
     <option>NABTEB</option>
   </select>
 
+  <hr>
+
   <input name="remarks" placeholder="REMARKS">
 
+  <!-- Buttons -->
   <button type="submit">SUBMIT / UPDATE</button>
 
-  <button type="button" id="downloadPDFBtn" style="margin-top:10px;background:#4caf50;color:#fff;">
+  <button type="button" id="downloadPDFBtn"
+          style="margin-top:10px;background:#4caf50;color:white;">
     Download My Submission PDF
   </button>
 
-  <button type="button" id="adminLoginBtn" style="margin-top:10px;background:#333;color:#fff;">
+  <button type="button" id="adminLoginBtn"
+          style="margin-top:10px;background:#333;color:white;">
     Admin Login
   </button>
 
-  <button type="button" id="downloadZipBtn" style="margin-top:10px;display:none;">
+  <button type="button" id="downloadZipBtn"
+          style="margin-top:10px;display:none;">
     Download All Passports (ZIP)
   </button>
 
-  <div id="previewContainer" style="margin:15px 0;text-align:center;"></div>
+  <!-- Passport Preview -->
+  <div id="previewContainer"
+       style="margin-top:15px;text-align:center;"></div>
+
 </form>
 
 <script src="script.js"></script>
