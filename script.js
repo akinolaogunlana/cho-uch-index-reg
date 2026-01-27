@@ -1,10 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+  // ---------------- Configuration ----------------
   const SHEETBEST_URL = "https://api.sheetbest.com/sheets/ceb9eddc-af9a-473a-9a32-f52c21c7f72b";
   const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
   const CLOUDINARY_PRESET = "cho_passports";
   const ADMIN_PASSWORD = "CHO@2026Secure!";
 
+  // ---------------- Form Elements ----------------
   const form = document.getElementById("indexForm");
   const submitBtn = form.querySelector("button[type='submit']");
   const downloadPDFBtn = document.getElementById("downloadPDFBtn");
@@ -14,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let passportDataUrl = "";
 
-  /* ================= PASSPORT PREVIEW ================= */
+  // ---------------- Passport Preview ----------------
   document.getElementById("passport").addEventListener("change", function () {
     previewContainer.innerHTML = "";
     const file = this.files[0];
@@ -25,6 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
       this.value = "";
       return;
     }
+
     if (file.size > 5 * 1024 * 1024) {
       alert("Image too large (max 5MB).");
       this.value = "";
@@ -33,6 +36,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const img = document.createElement("img");
     img.style.maxWidth = "150px";
+    img.style.borderRadius = "8px";
+    img.style.boxShadow = "0 4px 15px rgba(0,0,0,0.15)";
     img.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = img.naturalWidth;
@@ -44,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
     previewContainer.appendChild(img);
   });
 
-  /* ================= PDF DOWNLOAD ================= */
+  // ---------------- PDF Download ----------------
   downloadPDFBtn.addEventListener("click", () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -60,22 +65,43 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     doc.setFontSize(12);
-    [
-      ["SURNAME", form.surname.value],
-      ["FIRSTNAME", form.firstname.value],
+    const fields = [
+      ["SURNAME", form.surname.value.toUpperCase()],
+      ["FIRSTNAME", form.firstname.value.toUpperCase()],
+      ["OTHERNAMES", form.othernames.value.toUpperCase()],
+      ["CADRE", form.cadre.value],
+      ["GENDER", form.gender.value],
       ["BLOOD GROUP", form.bloodgroup.value],
-      ["O-LEVEL TYPE", form.olevel_type.value]
-    ].forEach(([l, v]) => {
-      doc.text(`${l}: ${v}`, 20, y);
+      ["STATE", form.state.value],
+      ["LGA / CITY/TOWN", form.lga_city_town.value],
+      ["DATE OF BIRTH", form.dob.value],
+      ["O-LEVEL TYPE", form.olevel_type.value],
+      ["O-LEVEL YEAR", form.olevel_year.value],
+      ["O-LEVEL EXAM NO.", form.olevel_exam.value],
+      ["A-LEVEL TYPE", form.alevel_type.value],
+      ["A-LEVEL YEAR", form.alevel_year.value],
+      ["PROFESSIONAL CERT. NO.", form.pro_cert.value],
+      ["ENGLISH", `${document.getElementById("engGrade").value} (${document.getElementById("engBody").value})`],
+      ["MATHEMATICS", `${document.getElementById("mathGrade").value} (${document.getElementById("mathBody").value})`],
+      ["BIOLOGY", document.getElementById("bioGrade").value ? `${document.getElementById("bioGrade").value} (${document.getElementById("bioBody").value})` : ""],
+      ["CHEMISTRY", document.getElementById("chemGrade").value ? `${document.getElementById("chemGrade").value} (${document.getElementById("chemBody").value})` : ""],
+      ["PHYSICS", document.getElementById("phyGrade").value ? `${document.getElementById("phyGrade").value} (${document.getElementById("phyBody").value})` : ""],
+      ["REMARKS", form.remarks.value]
+    ];
+
+    fields.forEach(([label, value]) => {
+      doc.text(`${label}: ${value}`, 20, y);
       y += 8;
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
     });
 
-    doc.save(
-      `CHO_${form.surname.value}_${form.bloodgroup.value}_${form.olevel_type.value}.pdf`
-    );
+    doc.save(`CHO_Form_${form.surname.value}_${form.firstname.value}.pdf`);
   });
 
-  /* ================= ADMIN ================= */
+  // ---------------- Admin Access ----------------
   function requireAdminAccess() {
     const entered = prompt("🔒 Admin Password:");
     if (entered !== ADMIN_PASSWORD) {
@@ -93,101 +119,220 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  /* ================= ZIP DOWNLOAD ================= */
+  // ---------------- Bulk ZIP Download ----------------
   downloadZipBtn.addEventListener("click", async () => {
     if (!requireAdminAccess()) return;
+    downloadZipBtn.disabled = true;
+    downloadZipBtn.innerText = "Preparing ZIP...";
 
-    const res = await fetch(SHEETBEST_URL);
-    const data = await res.json();
-    const zip = new JSZip();
-    const folder = zip.folder("passports");
+    try {
+      const res = await fetch(SHEETBEST_URL);
+      const allData = await res.json();
+      const zip = new JSZip();
+      const imgFolder = zip.folder("passports");
 
-    data.forEach((r, i) => {
-      if (r.PASSPORT) {
-        fetch(r.PASSPORT)
-          .then(res => res.blob())
-          .then(blob => {
-            folder.file(
-              `${r.SURNAME}_${r.BLOOD_GROUP}_${r.OLEVEL_TYPE}_${i + 1}.jpg`,
-              blob
-            );
-          });
+      for (let i = 0; i < allData.length; i++) {
+        const record = allData[i];
+        if (record.PASSPORT) {
+          const imgRes = await fetch(record.PASSPORT);
+          const blob = await imgRes.blob();
+          const name = `${record.SURNAME}_${record.FIRSTNAME}_${i + 1}.jpg`;
+          imgFolder.file(name, blob);
+        }
       }
-    });
 
-    const content = await zip.generateAsync({ type: "blob" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(content);
-    a.download = "CHO_Passports.zip";
-    a.click();
+      const content = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(content);
+      a.download = "CHO_Passports.zip";
+      a.click();
+    } catch (err) {
+      alert("Failed to create ZIP");
+      console.error(err);
+    } finally {
+      downloadZipBtn.disabled = false;
+      downloadZipBtn.innerText = "Download All Passports (ZIP)";
+    }
   });
 
-  /* ================= LIVE DUPLICATE CHECK ================= */
+  // ---------------- Live Duplicate Check ----------------
   async function checkDuplicateLive() {
-    const sInput = form.surname;
-    const bInput = form.bloodgroup;
-    const oInput = form.olevel_type;
+    const surnameInput = form.surname;
+    const bloodInput = form.bloodgroup;
+    const olevelInput = form.olevel_type;
 
     let warning = document.getElementById("duplicateWarning");
     if (!warning) {
       warning = document.createElement("div");
       warning.id = "duplicateWarning";
       warning.style.color = "red";
-      submitBtn.before(warning);
+      warning.style.marginTop = "5px";
+      surnameInput.parentNode.insertBefore(warning, submitBtn);
     }
 
     async function validate() {
-      const s = sInput.value.trim().toUpperCase();
-      const b = bInput.value;
-      const o = oInput.value;
-      if (!s || !b || !o) return;
+      const s = surnameInput.value.trim().toUpperCase();
+      const b = bloodInput.value.trim().toUpperCase();
+      const o = olevelInput.value.trim().toUpperCase();
 
-      const res = await fetch(SHEETBEST_URL);
-      const data = await res.json();
-
-      const duplicate = data.find(
-        r => r.SURNAME === s && r.BLOOD_GROUP === b && r.OLEVEL_TYPE === o
-      );
-
-      if (duplicate) {
-        warning.textContent = "❌ Duplicate record detected.";
-        submitBtn.disabled = true;
-      } else {
+      if (!s || !b || !o) {
         warning.textContent = "";
         submitBtn.disabled = false;
+        surnameInput.style.borderColor = "";
+        bloodInput.style.borderColor = "";
+        olevelInput.style.borderColor = "";
+        return;
+      }
+
+      try {
+        const res = await fetch(SHEETBEST_URL);
+        const allData = await res.json();
+
+        const duplicate = allData.find(r =>
+          r.SURNAME === s && r.BLOOD_GROUP === b && r.OLEVEL_TYPE.toUpperCase() === o
+        );
+
+        if (duplicate) {
+          warning.textContent = "❌ Duplicate entry detected!";
+          submitBtn.disabled = false; // allow edit
+          surnameInput.style.borderColor = "red";
+          bloodInput.style.borderColor = "red";
+          olevelInput.style.borderColor = "red";
+
+          // Pre-fill form with existing data for editing
+          form.firstname.value = duplicate.FIRSTNAME || "";
+          form.othernames.value = duplicate.OTHERNAMES || "";
+          form.state.value = duplicate.STATE || "";
+          form.lga_city_town.value = duplicate.LGA_CITY_TOWN || "";
+          form.dob.value = duplicate.DATE_OF_BIRTH || "";
+          form.olevel_year.value = duplicate.OLEVEL_YEAR || "";
+          form.olevel_exam.value = duplicate.OLEVEL_EXAM_NUMBER || "";
+          form.alevel_type.value = duplicate.ALEVEL_TYPE || "";
+          form.alevel_year.value = duplicate.ALEVEL_YEAR || "";
+          form.pro_cert.value = duplicate.PROFESSIONAL_CERTIFICATE_NUMBER || "";
+          form.remarks.value = duplicate.REMARKS || "";
+          if (duplicate.PASSPORT) {
+            passportDataUrl = duplicate.PASSPORT;
+            previewContainer.innerHTML = `<img src="${duplicate.PASSPORT}" style="max-width:150px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.15)">`;
+          }
+        } else {
+          warning.textContent = "";
+          surnameInput.style.borderColor = "";
+          bloodInput.style.borderColor = "";
+          olevelInput.style.borderColor = "";
+          passportDataUrl = "";
+          previewContainer.innerHTML = "";
+        }
+      } catch (err) {
+        console.error("Failed to check duplicates:", err);
       }
     }
 
-    sInput.addEventListener("input", validate);
-    bInput.addEventListener("change", validate);
-    oInput.addEventListener("change", validate);
+    surnameInput.addEventListener("input", validate);
+    bloodInput.addEventListener("input", validate);
+    olevelInput.addEventListener("change", validate);
   }
 
   checkDuplicateLive();
 
-  /* ================= SUBMISSION ================= */
-  form.addEventListener("submit", async e => {
+  // ---------------- Form Submission ----------------
+  form.addEventListener("submit", async function (e) {
     e.preventDefault();
     submitBtn.disabled = true;
-
-    const res = await fetch(SHEETBEST_URL);
-    const data = await res.json();
+    submitBtn.innerText = "Saving...";
 
     const s = form.surname.value.trim().toUpperCase();
-    const b = form.bloodgroup.value;
-    const o = form.olevel_type.value;
+    const b = form.bloodgroup.value.trim().toUpperCase();
+    const o = form.olevel_type.value.trim().toUpperCase();
 
-    const duplicate = data.find(
-      r => r.SURNAME === s && r.BLOOD_GROUP === b && r.OLEVEL_TYPE === o
-    );
-
-    if (duplicate) {
-      alert("❌ Record already exists. Please use EDIT.");
+    if (!s || !b || !o) {
+      alert("Please fill SURNAME, BLOOD GROUP, and O-LEVEL TYPE");
       submitBtn.disabled = false;
       return;
     }
 
-    alert("✅ Validation passed. Data will be saved.");
+    try {
+      const fileInput = document.getElementById("passport");
+      let passportUrl = passportDataUrl;
+
+      // If new file uploaded, upload to Cloudinary
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const cloudForm = new FormData();
+        cloudForm.append("file", file);
+        cloudForm.append("upload_preset", CLOUDINARY_PRESET);
+        const cloudRes = await fetch(CLOUDINARY_URL, { method: "POST", body: cloudForm });
+        const cloudData = await cloudRes.json();
+        passportUrl = cloudData.secure_url;
+      }
+
+      // Fetch existing data to determine if update
+      const res = await fetch(SHEETBEST_URL);
+      const allData = await res.json();
+      const duplicateIndex = allData.findIndex(r =>
+        r.SURNAME === s && r.BLOOD_GROUP === b && r.OLEVEL_TYPE.toUpperCase() === o
+      );
+
+      const recordData = {
+        SURNAME: s,
+        FIRSTNAME: form.firstname.value.trim().toUpperCase(),
+        OTHERNAMES: form.othernames.value.trim().toUpperCase(),
+        PASSPORT: passportUrl,
+        CADRE: form.cadre.value,
+        GENDER: form.gender.value,
+        BLOOD_GROUP: b,
+        STATE: form.state.value,
+        LGA_CITY_TOWN: form.lga_city_town.value,
+        DATE_OF_BIRTH: form.dob.value,
+        OLEVEL_TYPE: o,
+        OLEVEL_YEAR: form.olevel_year.value,
+        OLEVEL_EXAM_NUMBER: form.olevel_exam.value,
+        ALEVEL_TYPE: form.alevel_type.value,
+        ALEVEL_YEAR: form.alevel_year.value,
+        PROFESSIONAL_CERTIFICATE_NUMBER: form.pro_cert.value,
+        ENGLISH: `${document.getElementById("engGrade").value} (${document.getElementById("engBody").value})`,
+        MATHEMATICS: `${document.getElementById("mathGrade").value} (${document.getElementById("mathBody").value})`,
+        BIOLOGY: document.getElementById("bioGrade").value ? `${document.getElementById("bioGrade").value} (${document.getElementById("bioBody").value})` : "",
+        CHEMISTRY: document.getElementById("chemGrade").value ? `${document.getElementById("chemGrade").value} (${document.getElementById("chemBody").value})` : "",
+        PHYSICS: document.getElementById("phyGrade").value ? `${document.getElementById("phyGrade").value} (${document.getElementById("phyBody").value})` : "",
+        REMARKS: form.remarks.value
+      };
+
+      let response;
+      if (duplicateIndex !== -1) {
+        // Update existing record
+        const existingRecord = allData[duplicateIndex];
+        response = await fetch(`${SHEETBEST_URL}/${existingRecord.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(recordData)
+        });
+      } else {
+        // Create new record
+        response = await fetch(SHEETBEST_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify([recordData])
+        });
+      }
+
+      if (!response.ok) throw "Failed to save record";
+
+      form.innerHTML = `
+        <div style="text-align:center;padding:40px">
+          <h2 style="color:#2ecc71">✅ Submission Successful</h2>
+          <p>Your information has been saved successfully.</p>
+          <p style="color:red;font-weight:bold;">⚠️ Admin will only accept your information after receiving your registration payment.</p>
+          <button onclick="location.reload()">Submit / Edit Another</button>
+        </div>
+      `;
+
+    } catch (err) {
+      alert(err);
+      submitBtn.disabled = false;
+      submitBtn.innerText = "SUBMIT / UPDATE";
+      console.error(err);
+    }
   });
 
 });
