@@ -21,9 +21,9 @@ document.addEventListener("DOMContentLoaded", () => {
     PHYSICS: { grade: $("phyGrade"), body: $("phyBody") }
   };
 
-  let recordId = null;
-  let loadedRecord = null;
-  let passportUrl = null;
+  let passportDataUrl = "";
+  let recordId = null;        // SheetBest internal _id
+  let loadedRecord = null;    // Full record snapshot
 
   // ================= PASSPORT PREVIEW =================
   $("passport").addEventListener("change", function () {
@@ -43,6 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     previewContainer.innerHTML = "";
     previewContainer.appendChild(img);
+
+    passportDataUrl = img.src;
   });
 
   // ================= SEARCH =================
@@ -71,18 +73,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     loadedRecord = record;
-    recordId = record.ID;
+    recordId = record._id; // ✅ CRITICAL FIX
 
-    // ===== LOAD NORMAL FIELDS =====
+    // ===== NORMAL FIELDS =====
     for (let el of form.elements) {
       if (!el.name) continue;
       const key = el.name.toUpperCase();
-      if (record[key] !== undefined) {
-        el.value = record[key];
-      }
+      if (record[key] !== undefined) el.value = record[key];
     }
 
-    // ===== LOAD SUBJECTS =====
+    // ===== SUBJECTS =====
     Object.keys(subjects).forEach(sub => {
       const value = record[sub];
       const g = subjects[sub].grade;
@@ -96,17 +96,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const match = value.match(/^(.+?)\s*\((.+?)\)$/);
       if (match) {
-        g.value = match[1];
-        b.value = match[2];
+        g.value = match[1].trim();
+        b.value = match[2].trim();
       } else {
         g.value = value;
         b.value = "";
       }
     });
 
-    // ===== LOAD PASSPORT =====
+    // ===== PASSPORT =====
     if (record.PASSPORT) {
-      passportUrl = record.PASSPORT;
+      passportDataUrl = record.PASSPORT;
       previewContainer.innerHTML =
         `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
     }
@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ================= SUBMIT / UPDATE =================
-  form.addEventListener("submit", async e => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     if (!recordId || !loadedRecord) {
@@ -127,6 +127,8 @@ document.addEventListener("DOMContentLoaded", () => {
     submitBtn.innerText = "Saving...";
 
     try {
+      let passportUrl = loadedRecord.PASSPORT || "";
+
       // ===== PASSPORT UPLOAD =====
       const file = $("passport").files[0];
       if (file) {
@@ -143,49 +145,41 @@ document.addEventListener("DOMContentLoaded", () => {
         if (img?.secure_url) passportUrl = img.secure_url;
       }
 
-      // ===== SAFE MERGE =====
+      // ===== SAFE MERGE (NO DATA LOSS) =====
       const record = { ...loadedRecord };
 
-      const updateIfFilled = (field, key, transform = v => v) => {
-        if (field && field.value.trim() !== "") {
-          record[key] = transform(field.value.trim());
+      const setIfFilled = (key, val) => {
+        if (val !== undefined && val !== null && val !== "") {
+          record[key] = val;
         }
       };
 
-      updateIfFilled(form.surname, "SURNAME", v => v.toUpperCase());
-      updateIfFilled(form.firstname, "FIRSTNAME", v => v.toUpperCase());
-      updateIfFilled(form.othernames, "OTHERNAMES");
-      updateIfFilled(form.gender, "GENDER");
-      updateIfFilled(form.blood_group, "BLOOD_GROUP");
-      updateIfFilled(form.state, "STATE");
-      updateIfFilled(form.lga_city_town, "LGA_CITY_TOWN");
-      updateIfFilled(form.date_of_birth, "DATE_OF_BIRTH");
-      updateIfFilled(form.olevel_type, "OLEVEL_TYPE");
-      updateIfFilled(form.olevel_year, "OLEVEL_YEAR");
-      updateIfFilled(form.olevel_exam_number, "OLEVEL_EXAM_NUMBER");
-      updateIfFilled(form.alevel_type, "ALEVEL_TYPE");
-      updateIfFilled(form.alevel_year, "ALEVEL_YEAR");
-      updateIfFilled(
-        form.professional_certificate_number,
-        "PROFESSIONAL_CERTIFICATE_NUMBER"
-      );
-      updateIfFilled(form.remarks, "REMARKS");
+      setIfFilled("SURNAME", form.surname.value.toUpperCase());
+      setIfFilled("FIRSTNAME", form.firstname.value.toUpperCase());
+      setIfFilled("OTHERNAMES", form.othernames.value);
+      setIfFilled("GENDER", form.gender.value);
+      setIfFilled("BLOOD_GROUP", form.blood_group.value);
+      setIfFilled("STATE", form.state.value);
+      setIfFilled("LGA_CITY_TOWN", form.lga_city_town.value);
+      setIfFilled("DATE_OF_BIRTH", form.date_of_birth.value);
+      setIfFilled("OLEVEL_TYPE", form.olevel_type.value);
+      setIfFilled("OLEVEL_YEAR", form.olevel_year.value);
+      setIfFilled("OLEVEL_EXAM_NUMBER", form.olevel_exam_number.value);
+      setIfFilled("ALEVEL_TYPE", form.alevel_type.value);
+      setIfFilled("ALEVEL_YEAR", form.alevel_year.value);
+      setIfFilled("PROFESSIONAL_CERTIFICATE_NUMBER", form.professional_certificate_number.value);
+      setIfFilled("REMARKS", form.remarks.value);
 
-      // ===== SUBJECTS =====
+      // ===== SUBJECTS SAFE UPDATE =====
       Object.keys(subjects).forEach(sub => {
-        const g = subjects[sub].grade?.value.trim();
-        const b = subjects[sub].body?.value.trim();
-        if (g) {
-          record[sub] = b ? `${g} (${b})` : g;
-        }
+        const g = subjects[sub].grade.value.trim();
+        const b = subjects[sub].body.value.trim();
+        if (g) record[sub] = `${g} (${b})`;
       });
 
-      if (passportUrl) {
-        record.PASSPORT = passportUrl;
-      }
+      if (passportUrl) record.PASSPORT = passportUrl;
 
-      console.log("PATCH DATA:", record);
-
+      // ===== PATCH =====
       await fetch(`${SHEETBEST_URL}/${recordId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -197,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (err) {
       console.error(err);
-      alert("ERROR: " + err.message);
+      alert("❌ Update failed");
       submitBtn.disabled = false;
       submitBtn.innerText = "SUBMIT / UPDATE";
     }
