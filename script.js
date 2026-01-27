@@ -3,12 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const $ = id => document.getElementById(id);
 
   // ================= CONFIG =================
-  const SHEETBEST_URL =
-    "https://api.sheetbest.com/sheets/ceb9eddc-af9a-473a-9a32-f52c21c7f72b";
-
-  const CLOUDINARY_URL =
-    "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
-
+  const SHEETBEST_URL = "https://api.sheetbest.com/sheets/ceb9eddc-af9a-473a-9a32-f52c21c7f72b";
+  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
   const CLOUDINARY_PRESET = "cho_passports";
 
   const form = $("indexForm");
@@ -25,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   let passportDataUrl = "";
-  let recordId = null; // 🔑 store the Sheetbest row id for updates
+  let virtualId = null; // 🔑 SURNAME + BLOOD_GROUP + OLEVEL_TYPE
 
   // ================= PASSPORT PREVIEW =================
   $("passport").addEventListener("change", function () {
@@ -46,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
     previewContainer.innerHTML = "";
     previewContainer.appendChild(img);
 
-    passportDataUrl = img.src; // temporarily store preview
+    passportDataUrl = img.src;
   });
 
   // ================= SEARCH =================
@@ -64,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch(SHEETBEST_URL);
       const data = await res.json();
 
+      // 🔑 SEARCH: SURNAME + BLOOD_GROUP + OLEVEL_TYPE
       const record = data.find(r =>
         r.SURNAME?.toUpperCase() === surname &&
         r.BLOOD_GROUP === blood &&
@@ -72,11 +69,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!record) {
         alert("No record found.");
+        virtualId = null;
         return;
       }
 
-      // ✅ Store the Sheetbest row id for update
-      recordId = record.id;
+      // Create virtual ID for PATCH
+      virtualId = `${surname}|${blood}|${olevel}`;
 
       // ===== NORMAL FIELDS =====
       for (let el of form.elements) {
@@ -104,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
           g.value = match[1].trim();
           b.value = match[2].trim();
         } else {
-          g.value = value.trim();
+          g.value = value;
           b.value = "";
         }
       });
@@ -117,17 +115,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       alert("✅ Record loaded successfully");
+
     } catch (err) {
       console.error(err);
       alert("ERROR: " + err);
     }
   });
 
-  // ================= SUBMIT / UPDATE =================
+  // ================= SUBMIT/UPDATE =================
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    if (!recordId) {
+    if (!virtualId) {
       alert("Please search and load a record first. Cannot update a non-existing record.");
       return;
     }
@@ -144,7 +143,11 @@ document.addEventListener("DOMContentLoaded", () => {
         fd.append("file", file);
         fd.append("upload_preset", CLOUDINARY_PRESET);
 
-        const upload = await fetch(CLOUDINARY_URL, { method: "POST", body: fd });
+        const upload = await fetch(CLOUDINARY_URL, {
+          method: "POST",
+          body: fd
+        });
+
         const img = await upload.json();
         if (img?.secure_url) passportUrl = img.secure_url;
       }
@@ -153,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const record = {
         SURNAME: form.surname?.value?.toUpperCase() || "",
         FIRSTNAME: form.firstname?.value?.toUpperCase() || "",
-        OTHERNAMES: form.othernames?.value?.toUpperCase() || "",
+        OTHERNAMES: form.othernames?.value || "",
         CADRE: "CHO",
         GENDER: form.gender?.value || "",
         BLOOD_GROUP: form.blood_group?.value || "",
@@ -177,8 +180,8 @@ document.addEventListener("DOMContentLoaded", () => {
         record[sub] = g ? `${g} (${b})` : "";
       });
 
-      // ===== PATCH using the Sheetbest row id =====
-      await fetch(`${SHEETBEST_URL}/${recordId}`, {
+      // ===== PATCH using virtual ID =====
+      await fetch(`${SHEETBEST_URL}/${virtualId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(record)
