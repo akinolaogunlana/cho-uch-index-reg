@@ -1,180 +1,200 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>CHO INDEXING FORM</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+document.addEventListener("DOMContentLoaded", () => {
 
-  <link rel="stylesheet" href="style.css">
+  const $ = id => document.getElementById(id);
 
-  <!-- PDF & ZIP -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.6.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-</head>
-<body>
+  // ================= CONFIG =================
+  const SHEETBEST_URL =
+    "https://api.sheetbest.com/sheets/ceb9eddc-af9a-473a-9a32-f52c21c7f72b";
 
-<h2>CHO INDEXING DATA COLLECTION</h2>
+  const CLOUDINARY_URL =
+    "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
 
-<!-- ================= SEARCH ================= -->
-<h3>🔍 Find Your Submission</h3>
+  const CLOUDINARY_PRESET = "cho_passports";
 
-<input id="searchSurname" placeholder="SURNAME">
-<select id="searchBloodGroup">
-  <option value="">SELECT BLOOD GROUP</option>
-  <option>A+</option><option>A-</option>
-  <option>B+</option><option>B-</option>
-  <option>AB+</option><option>AB-</option>
-  <option>O+</option><option>O-</option>
-</select>
+  const form = $("indexForm");
+  const submitBtn = form.querySelector("button[type='submit']");
+  const previewContainer = $("previewContainer");
 
-<select id="searchOlevelType">
-  <option value="">SELECT O-LEVEL TYPE</option>
-  <option>WAEC</option>
-  <option>NECO</option>
-  <option>NABTEB</option>
-  <option>WAEC / WAEC</option>
-  <option>NECO / NECO</option>
-  <option>NABTEB / NABTEB</option>
-  <option>WAEC / NECO</option>
-  <option>NABTEB / WAEC</option>
-  <option>NABTEB / NECO</option>
-</select>
+  // ================= SUBJECT ELEMENTS =================
+  const subjects = {
+    ENGLISH:    { grade: $("engGrade"),  body: $("engBody") },
+    MATHEMATICS:{ grade: $("mathGrade"), body: $("mathBody") },
+    BIOLOGY:    { grade: $("bioGrade"),  body: $("bioBody") },
+    CHEMISTRY:  { grade: $("chemGrade"), body: $("chemBody") },
+    PHYSICS:    { grade: $("phyGrade"),  body: $("phyBody") }
+  };
 
-<button type="button" id="searchBtn">Find My Record</button>
-<div id="searchWarning" style="color:red;margin-top:6px;"></div>
+  let passportDataUrl = "";
+  let recordId = null;
 
-<hr>
+  // ================= PASSPORT PREVIEW =================
+  $("passport").addEventListener("change", function () {
+    const file = this.files[0];
+    if (!file) return;
 
-<!-- ================= FORM ================= -->
-<form id="indexForm" enctype="multipart/form-data">
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      alert("Only JPG or PNG allowed");
+      this.value = "";
+      return;
+    }
 
-  <input name="surname" placeholder="SURNAME" required>
-  <input name="firstname" placeholder="FIRST NAME" required>
-  <input name="othernames" placeholder="OTHER NAMES">
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.style.maxWidth = "150px";
+    img.style.borderRadius = "8px";
 
-  <!-- Passport -->
-  <label>Passport (JPG / PNG only – max 5MB)</label>
-  <input type="file" id="passport" accept="image/jpeg,image/png">
+    previewContainer.innerHTML = "";
+    previewContainer.appendChild(img);
 
-  <input name="cadre" value="CHO" readonly>
+    passportDataUrl = img.src; // store preview as data URL temporarily
+  });
 
-  <!-- Gender -->
-  <select name="gender" required>
-    <option value="">SELECT GENDER</option>
-    <option>MALE</option>
-    <option>FEMALE</option>
-  </select>
+  // ================= SEARCH =================
+  $("searchBtn").addEventListener("click", async () => {
 
-  <!-- Blood group -->
-  <select name="blood_group" required>
-    <option value="">SELECT BLOOD GROUP</option>
-    <option>A+</option><option>A-</option>
-    <option>B+</option><option>B-</option>
-    <option>AB+</option><option>AB-</option>
-    <option>O+</option><option>O-</option>
-  </select>
+    const surname = $("searchSurname").value.trim().toUpperCase();
+    const blood   = $("searchBloodGroup").value;
+    const olevel  = $("searchOlevelType").value;
 
-  <input name="state" placeholder="STATE">
-  <input name="lga_city_town" placeholder="LGA / CITY / TOWN">
+    if (!surname || !blood || !olevel) {
+      alert("Surname, blood group and O-Level type required.");
+      return;
+    }
 
-  <!-- DOB -->
-  <label>Date of Birth (DD/MM/YYYY)</label>
-  <input name="date_of_birth" placeholder="DD/MM/YYYY" required>
+    const res = await fetch(SHEETBEST_URL);
+    const data = await res.json();
 
-  <!-- O-Level -->
-  <select name="olevel_type" required>
-    <option value="">SELECT O-LEVEL TYPE</option>
-    <option>WAEC</option>
-    <option>NECO</option>
-    <option>NABTEB</option>
-    <option>WAEC / WAEC</option>
-    <option>NECO / NECO</option>
-    <option>NABTEB / NABTEB</option>
-    <option>WAEC / NECO</option>
-    <option>NABTEB / WAEC</option>
-    <option>NABTEB / NECO</option>
-  </select>
+    const record = data.find(r =>
+      r.SURNAME === surname &&
+      r.BLOOD_GROUP === blood &&
+      r.OLEVEL_TYPE === olevel
+    );
 
-  <input name="olevel_year" placeholder="O-LEVEL YEAR(S)">
-  <input name="olevel_exam_number" placeholder="O-LEVEL EXAM NUMBER">
+    if (!record) {
+      alert("No record found.");
+      return;
+    }
 
-  <!-- A-Level -->
-  <input name="alevel_type" placeholder="A-LEVEL TYPE">
-  <input name="alevel_year" placeholder="A-LEVEL YEAR">
+    recordId = record._id;
 
-  <!-- Professional -->
-  <input name="professional_certificate_number"
-         placeholder="PROFESSIONAL CERTIFICATE NUMBER">
+    // ===== NORMAL FIELDS =====
+    for (let el of form.elements) {
+      if (!el.name) continue;
+      const key = el.name.toUpperCase();
+      if (record[key] !== undefined) {
+        el.value = record[key];
+      }
+    }
 
-  <hr>
+    // ===== SUBJECTS =====
+    Object.keys(subjects).forEach(sub => {
+      const value = record[sub];
+      const g = subjects[sub].grade;
+      const b = subjects[sub].body;
 
-  <!-- ================= SUBJECTS ================= -->
+      if (!g || !b) return;
 
-  <input name="english" id="engGrade" placeholder="ENGLISH GRADE">
-  <select id="engBody">
-    <option>WAEC</option>
-    <option>NECO</option>
-    <option>NABTEB</option>
-  </select>
+      if (!value) {
+        g.value = "";
+        b.value = "";
+        return;
+      }
 
-  <input name="mathematics" id="mathGrade" placeholder="MATHEMATICS GRADE">
-  <select id="mathBody">
-    <option>WAEC</option>
-    <option>NECO</option>
-    <option>NABTEB</option>
-  </select>
+      const match = value.match(/^(.+?)\s*\((.+?)\)$/);
+      if (match) {
+        g.value = match[1].trim();
+        b.value = match[2].trim();
+      } else {
+        g.value = value;
+        b.value = "";
+      }
+    });
 
-  <input name="biology" id="bioGrade" placeholder="BIOLOGY GRADE">
-  <select id="bioBody">
-    <option>WAEC</option>
-    <option>NECO</option>
-    <option>NABTEB</option>
-  </select>
+    // ===== PASSPORT =====
+    if (record.PASSPORT) {
+      passportDataUrl = record.PASSPORT;
+      previewContainer.innerHTML =
+        `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
+    }
 
-  <input name="chemistry" id="chemGrade" placeholder="CHEMISTRY GRADE">
-  <select id="chemBody">
-    <option>WAEC</option>
-    <option>NECO</option>
-    <option>NABTEB</option>
-  </select>
+    alert("✅ Record loaded successfully");
+  });
 
-  <input name="physics" id="phyGrade" placeholder="PHYSICS GRADE">
-  <select id="phyBody">
-    <option>WAEC</option>
-    <option>NECO</option>
-    <option>NABTEB</option>
-  </select>
+  // ================= SUBMIT =================
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  <hr>
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Saving...";
 
-  <input name="remarks" placeholder="REMARKS">
+    try {
 
-  <!-- Buttons -->
-  <button type="submit">SUBMIT / UPDATE</button>
+      let passportUrl = passportDataUrl;
 
-  <button type="button" id="downloadPDFBtn"
-          style="margin-top:10px;background:#4caf50;color:white;">
-    Download My Submission PDF
-  </button>
+      const file = $("passport").files[0];
+      if (file) {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("upload_preset", CLOUDINARY_PRESET);
 
-  <button type="button" id="adminLoginBtn"
-          style="margin-top:10px;background:#333;color:white;">
-    Admin Login
-  </button>
+        const upload = await fetch(CLOUDINARY_URL, {
+          method: "POST",
+          body: fd
+        });
 
-  <button type="button" id="downloadZipBtn"
-          style="margin-top:10px;display:none;">
-    Download All Passports (ZIP)
-  </button>
+        const img = await upload.json();
+        if (img?.secure_url) passportUrl = img.secure_url;
+      }
 
-  <!-- Passport Preview -->
-  <div id="previewContainer"
-       style="margin-top:15px;text-align:center;"></div>
+      // ===== BUILD RECORD =====
+      const record = {
+        SURNAME: form.surname?.value?.toUpperCase() || "",
+        FIRSTNAME: form.firstname?.value?.toUpperCase() || "",
+        OTHERNAMES: form.othernames?.value?.toUpperCase() || "",
+        CADRE: "CHO",
+        GENDER: form.gender?.value || "",
+        BLOOD_GROUP: form.blood_group?.value || "",
+        STATE: form.state?.value || "",
+        LGA_CITY_TOWN: form.lga_city_town?.value || "",
+        DATE_OF_BIRTH: form.date_of_birth?.value || "",
+        OLEVEL_TYPE: form.olevel_type?.value || "",
+        OLEVEL_YEAR: form.olevel_year?.value || "",
+        OLEVEL_EXAM_NUMBER: form.olevel_exam_number?.value || "",
+        ALEVEL_TYPE: form.alevel_type?.value || "",
+        ALEVEL_YEAR: form.alevel_year?.value || "",
+        PROFESSIONAL_CERTIFICATE_NUMBER: form.professional_certificate_number?.value || "",
+        PASSPORT: passportUrl,
+        REMARKS: form.remarks?.value || ""
+      };
 
-</form>
+      // ===== SUBJECTS =====
+      Object.keys(subjects).forEach(sub => {
+        const g = subjects[sub].grade?.value?.replace(/\(.+?\)/g, "").trim() || "";
+        const b = subjects[sub].body?.value || "";
+        record[sub] = g ? `${g} (${b})` : "";
+      });
 
-<script src="script.js"></script>
+      const url = recordId ? `${SHEETBEST_URL}/${recordId}` : SHEETBEST_URL;
+      const method = recordId ? "PUT" : "POST";
 
-</body>
-</html>
+      await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(recordId ? record : [record])
+      });
+
+      alert(recordId
+        ? "✅ Record updated successfully"
+        : "✅ Record saved successfully");
+
+      location.reload();
+
+    } catch (err) {
+      console.error(err);
+      alert("ERROR: " + err);
+      submitBtn.disabled = false;
+      submitBtn.innerText = "SUBMIT";
+    }
+  });
+
+});
