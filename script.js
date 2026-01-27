@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  // ================= CONFIG =================
   const SHEETBEST_URL =
     "https://api.sheetbest.com/sheets/ceb9eddc-af9a-473a-9a32-f52c21c7f72b";
 
@@ -14,22 +13,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewContainer = document.getElementById("previewContainer");
 
   let passportDataUrl = "";
-  let currentRowId = null;
+  let recordId = null;
 
-
-  // ================= PASSPORT PREVIEW =================
+  /* ================= PASSPORT PREVIEW ================= */
   document.getElementById("passport").addEventListener("change", function () {
     const file = this.files[0];
     if (!file) return;
 
     if (!["image/jpeg", "image/png"].includes(file.type)) {
       alert("Only JPG or PNG allowed");
-      this.value = "";
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Maximum 5MB allowed");
       this.value = "";
       return;
     }
@@ -43,43 +35,41 @@ document.addEventListener("DOMContentLoaded", () => {
     previewContainer.appendChild(img);
   });
 
-
-  // ================= SEARCH RECORD =================
+  /* ================= SEARCH ================= */
   document.getElementById("searchBtn").addEventListener("click", async () => {
 
     const surname =
       document.getElementById("searchSurname").value.trim().toUpperCase();
+
     const blood =
       document.getElementById("searchBloodGroup").value;
+
     const olevel =
       document.getElementById("searchOlevelType").value;
 
     if (!surname || !blood || !olevel) {
       document.getElementById("searchWarning").innerText =
-        "Please fill surname, blood group and O-Level type.";
+        "Surname, blood group and O-Level type required.";
       return;
     }
-
-    document.getElementById("searchWarning").innerText = "";
 
     const res = await fetch(SHEETBEST_URL);
     const data = await res.json();
 
     const record = data.find(r =>
-      r.SURNAME?.toUpperCase() === surname &&
+      r.SURNAME === surname &&
       r.BLOOD_GROUP === blood &&
       r.OLEVEL_TYPE === olevel
     );
 
     if (!record) {
-      document.getElementById("searchWarning").innerText =
-        "No record found.";
+      alert("No record found");
       return;
     }
 
-    currentRowId = record.id;
+    recordId = record._id;
 
-    // ✅ AUTO-FILL EVERYTHING
+    // ===== NORMAL FIELDS =====
     for (let el of form.elements) {
       const key = el.name?.toUpperCase();
       if (key && record[key] !== undefined) {
@@ -87,20 +77,44 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Passport reload
-    if (record.PASSPORT) {
-      passportDataUrl = record.PASSPORT;
-      previewContainer.innerHTML = `
-        <img src="${record.PASSPORT}"
-             style="max-width:150px;border-radius:8px;">
-      `;
+    // ===== SUBJECT FIX =====
+    function splitSubject(value) {
+      if (!value) return ["", ""];
+      const match = value.match(/^(.+?)\s*\((.+?)\)$/);
+      return match ? [match[1], match[2]] : [value, ""];
     }
 
-    alert("✅ Full record loaded successfully");
+    let [g, b] = splitSubject(record.ENGLISH);
+    engGrade.value = g;
+    engBody.value = b;
+
+    [g, b] = splitSubject(record.MATHEMATICS);
+    mathGrade.value = g;
+    mathBody.value = b;
+
+    [g, b] = splitSubject(record.BIOLOGY);
+    bioGrade.value = g;
+    bioBody.value = b;
+
+    [g, b] = splitSubject(record.CHEMISTRY);
+    chemGrade.value = g;
+    chemBody.value = b;
+
+    [g, b] = splitSubject(record.PHYSICS);
+    phyGrade.value = g;
+    phyBody.value = b;
+
+    // ===== PASSPORT =====
+    if (record.PASSPORT) {
+      passportDataUrl = record.PASSPORT;
+      previewContainer.innerHTML =
+        `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
+    }
+
+    alert("✅ Record loaded correctly");
   });
 
-
-  // ================= SUBMIT =================
+  /* ================= SUBMIT ================= */
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -109,18 +123,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
 
-      // DOB
-      const dob = form.date_of_birth.value.trim();
-      if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dob)) {
-        throw "Date must be DD/MM/YYYY";
-      }
-
-      // Passport upload
       let passportUrl = passportDataUrl;
 
       const file = document.getElementById("passport").files[0];
       if (file) {
-
         const fd = new FormData();
         fd.append("file", file);
         fd.append("upload_preset", CLOUDINARY_PRESET);
@@ -130,72 +136,54 @@ document.addEventListener("DOMContentLoaded", () => {
           body: fd
         });
 
-        const result = await upload.json();
-
-        if (!result.secure_url) {
-          throw "Passport upload failed";
-        }
-
-        passportUrl = result.secure_url;
+        const img = await upload.json();
+        passportUrl = img.secure_url;
       }
 
-      // RECORD
       const record = {
         SURNAME: form.surname.value.toUpperCase(),
         FIRSTNAME: form.firstname.value.toUpperCase(),
         OTHERNAMES: form.othernames.value.toUpperCase(),
-        BLOOD_GROUP: form.blood_group.value,
-        OLEVEL_TYPE: form.olevel_type.value,
-        OLEVEL_YEAR: form.olevel_year.value,
-        OLEVEL_EXAM_NUMBER: form.olevel_exam_number.value,
-        ALEVEL_TYPE: form.alevel_type.value,
-        ALEVEL_YEAR: form.alevel_year.value,
-        PROFESSIONAL_CERTIFICATE_NUMBER:
-          form.professional_certificate_number.value,
         CADRE: "CHO",
         GENDER: form.gender.value,
+        BLOOD_GROUP: form.bloodgroup.value,
         STATE: form.state.value,
         LGA_CITY_TOWN: form.lga_city_town.value,
-        DATE_OF_BIRTH: dob,
+        DATE_OF_BIRTH: form.dob.value,
+        OLEVEL_TYPE: form.olevel_type.value,
+        OLEVEL_YEAR: form.olevel_year.value,
+        OLEVEL_EXAM_NUMBER: form.olevel_exam.value,
         PASSPORT: passportUrl,
 
-        ENGLISH: `${form.english.value} (${engBody.value})`,
-        MATHEMATICS: `${form.mathematics.value} (${mathBody.value})`,
-        BIOLOGY: form.biology.value
-          ? `${form.biology.value} (${bioBody.value})`
-          : "",
-        CHEMISTRY: form.chemistry.value
-          ? `${form.chemistry.value} (${chemBody.value})`
-          : "",
-        PHYSICS: form.physics.value
-          ? `${form.physics.value} (${phyBody.value})`
-          : "",
+        ENGLISH: `${engGrade.value} (${engBody.value})`,
+        MATHEMATICS: `${mathGrade.value} (${mathBody.value})`,
+        BIOLOGY: bioGrade.value ? `${bioGrade.value} (${bioBody.value})` : "",
+        CHEMISTRY: chemGrade.value ? `${chemGrade.value} (${chemBody.value})` : "",
+        PHYSICS: phyGrade.value ? `${phyGrade.value} (${phyBody.value})` : "",
 
         REMARKS: form.remarks.value
       };
 
-      // SAVE OR UPDATE
-      const method = currentRowId ? "PATCH" : "POST";
-      const url = currentRowId
-        ? `${SHEETBEST_URL}/${currentRowId}`
+      const url = recordId
+        ? `${SHEETBEST_URL}/${recordId}`
         : SHEETBEST_URL;
+
+      const method = recordId ? "PUT" : "POST";
 
       await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(currentRowId ? record : [record])
+        body: JSON.stringify(recordId ? record : [record])
       });
 
-      alert(
-        currentRowId
-          ? "✅ Record updated successfully"
-          : "✅ New record saved successfully"
-      );
+      alert(recordId
+        ? "✅ Record updated successfully"
+        : "✅ Record saved successfully");
 
       location.reload();
 
     } catch (err) {
-      alert(err);
+      alert("Error: " + err);
       submitBtn.disabled = false;
       submitBtn.innerText = "SUBMIT";
     }
