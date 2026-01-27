@@ -21,9 +21,9 @@ document.addEventListener("DOMContentLoaded", () => {
     PHYSICS: { grade: $("phyGrade"), body: $("phyBody") }
   };
 
-  let passportDataUrl = "";
-  let recordId = null; // store ID for update
-  let loadedRecord = null; // store full record to merge
+  let recordId = null;
+  let loadedRecord = null;
+  let passportUrl = null;
 
   // ================= PASSPORT PREVIEW =================
   $("passport").addEventListener("change", function () {
@@ -43,8 +43,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     previewContainer.innerHTML = "";
     previewContainer.appendChild(img);
-
-    passportDataUrl = img.src; // temporarily store preview
   });
 
   // ================= SEARCH =================
@@ -61,7 +59,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const res = await fetch(SHEETBEST_URL);
     const data = await res.json();
 
-    // search by Surname + Blood Group + O-Level Type
     const record = data.find(r =>
       r.SURNAME?.toUpperCase() === surname &&
       r.BLOOD_GROUP === blood &&
@@ -73,23 +70,23 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    loadedRecord = record; // store full record for merging
-    recordId = record.ID; // must match your ID column in SheetBest
+    loadedRecord = record;
+    recordId = record.ID;
 
-    // ===== NORMAL FIELDS =====
+    // ===== LOAD NORMAL FIELDS =====
     for (let el of form.elements) {
       if (!el.name) continue;
       const key = el.name.toUpperCase();
-      if (record[key] !== undefined) el.value = record[key];
+      if (record[key] !== undefined) {
+        el.value = record[key];
+      }
     }
 
-    // ===== SUBJECTS =====
+    // ===== LOAD SUBJECTS =====
     Object.keys(subjects).forEach(sub => {
       const value = record[sub];
       const g = subjects[sub].grade;
       const b = subjects[sub].body;
-
-      if (!g || !b) return;
 
       if (!value) {
         g.value = "";
@@ -99,29 +96,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const match = value.match(/^(.+?)\s*\((.+?)\)$/);
       if (match) {
-        g.value = match[1].trim();
-        b.value = match[2].trim();
+        g.value = match[1];
+        b.value = match[2];
       } else {
         g.value = value;
         b.value = "";
       }
     });
 
-    // ===== PASSPORT =====
+    // ===== LOAD PASSPORT =====
     if (record.PASSPORT) {
-      passportDataUrl = record.PASSPORT;
-      previewContainer.innerHTML = `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
+      passportUrl = record.PASSPORT;
+      previewContainer.innerHTML =
+        `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
     }
 
     alert("✅ Record loaded successfully");
   });
 
-  // ================= SUBMIT =================
-  form.addEventListener("submit", async (e) => {
+  // ================= SUBMIT / UPDATE =================
+  form.addEventListener("submit", async e => {
     e.preventDefault();
 
     if (!recordId || !loadedRecord) {
-      alert("Please search and load a record first. Cannot update a non-existing record.");
+      alert("Please search and load a record first.");
       return;
     }
 
@@ -129,8 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
     submitBtn.innerText = "Saving...";
 
     try {
-      let passportUrl = passportDataUrl;
-
+      // ===== PASSPORT UPLOAD =====
       const file = $("passport").files[0];
       if (file) {
         const fd = new FormData();
@@ -146,37 +143,49 @@ document.addEventListener("DOMContentLoaded", () => {
         if (img?.secure_url) passportUrl = img.secure_url;
       }
 
-      // ===== MERGE EXISTING RECORD WITH FORM =====
-      const record = { ...loadedRecord }; // copy full record
+      // ===== SAFE MERGE =====
+      const record = { ...loadedRecord };
 
-      // overwrite only fields that exist in form
-      record.SURNAME = form.surname?.value?.toUpperCase() || record.SURNAME;
-      record.FIRSTNAME = form.firstname?.value?.toUpperCase() || record.FIRSTNAME;
-      record.OTHERNAMES = form.othernames?.value || record.OTHERNAMES;
-      record.GENDER = form.gender?.value || record.GENDER;
-      record.BLOOD_GROUP = form.blood_group?.value || record.BLOOD_GROUP;
-      record.STATE = form.state?.value || record.STATE;
-      record.LGA_CITY_TOWN = form.lga_city_town?.value || record.LGA_CITY_TOWN;
-      record.DATE_OF_BIRTH = form.date_of_birth?.value || record.DATE_OF_BIRTH;
-      record.OLEVEL_TYPE = form.olevel_type?.value || record.OLEVEL_TYPE;
-      record.OLEVEL_YEAR = form.olevel_year?.value || record.OLEVEL_YEAR;
-      record.OLEVEL_EXAM_NUMBER = form.olevel_exam_number?.value || record.OLEVEL_EXAM_NUMBER;
-      record.ALEVEL_TYPE = form.alevel_type?.value || record.ALEVEL_TYPE;
-      record.ALEVEL_YEAR = form.alevel_year?.value || record.ALEVEL_YEAR;
-      record.PROFESSIONAL_CERTIFICATE_NUMBER = form.professional_certificate_number?.value || record.PROFESSIONAL_CERTIFICATE_NUMBER;
-      record.REMARKS = form.remarks?.value || record.REMARKS;
+      const updateIfFilled = (field, key, transform = v => v) => {
+        if (field && field.value.trim() !== "") {
+          record[key] = transform(field.value.trim());
+        }
+      };
 
-      // subjects: overwrite only if grade is provided
+      updateIfFilled(form.surname, "SURNAME", v => v.toUpperCase());
+      updateIfFilled(form.firstname, "FIRSTNAME", v => v.toUpperCase());
+      updateIfFilled(form.othernames, "OTHERNAMES");
+      updateIfFilled(form.gender, "GENDER");
+      updateIfFilled(form.blood_group, "BLOOD_GROUP");
+      updateIfFilled(form.state, "STATE");
+      updateIfFilled(form.lga_city_town, "LGA_CITY_TOWN");
+      updateIfFilled(form.date_of_birth, "DATE_OF_BIRTH");
+      updateIfFilled(form.olevel_type, "OLEVEL_TYPE");
+      updateIfFilled(form.olevel_year, "OLEVEL_YEAR");
+      updateIfFilled(form.olevel_exam_number, "OLEVEL_EXAM_NUMBER");
+      updateIfFilled(form.alevel_type, "ALEVEL_TYPE");
+      updateIfFilled(form.alevel_year, "ALEVEL_YEAR");
+      updateIfFilled(
+        form.professional_certificate_number,
+        "PROFESSIONAL_CERTIFICATE_NUMBER"
+      );
+      updateIfFilled(form.remarks, "REMARKS");
+
+      // ===== SUBJECTS =====
       Object.keys(subjects).forEach(sub => {
-        const g = subjects[sub].grade?.value?.replace(/\(.+?\)/g, "").trim() || "";
-        const b = subjects[sub].body?.value || "";
-        if (g) record[sub] = `${g} (${b})`;
+        const g = subjects[sub].grade?.value.trim();
+        const b = subjects[sub].body?.value.trim();
+        if (g) {
+          record[sub] = b ? `${g} (${b})` : g;
+        }
       });
 
-      // passport
-      if (passportUrl) record.PASSPORT = passportUrl;
+      if (passportUrl) {
+        record.PASSPORT = passportUrl;
+      }
 
-      // ===== PATCH UPDATE =====
+      console.log("PATCH DATA:", record);
+
       await fetch(`${SHEETBEST_URL}/${recordId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -188,9 +197,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (err) {
       console.error(err);
-      alert("ERROR: " + err);
+      alert("ERROR: " + err.message);
       submitBtn.disabled = false;
-      submitBtn.innerText = "SUBMIT";
+      submitBtn.innerText = "SUBMIT / UPDATE";
     }
   });
 });
