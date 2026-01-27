@@ -48,8 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("searchOlevelType").value;
 
     if (!surname || !blood || !olevel) {
-      document.getElementById("searchWarning").innerText =
-        "Surname, blood group and O-Level type required.";
+      alert("Surname, blood group and O-Level type required");
       return;
     }
 
@@ -69,49 +68,61 @@ document.addEventListener("DOMContentLoaded", () => {
 
     recordId = record._id;
 
-    // ===== NORMAL FIELDS =====
+    /* ===== NORMAL FIELDS ONLY ===== */
     for (let el of form.elements) {
-      const key = el.name?.toUpperCase();
-      if (key && record[key] !== undefined) {
+
+      if (!el.name) continue;
+
+      const key = el.name.toUpperCase();
+
+      // 🚫 DO NOT autofill subject fields
+      if (
+        key === "ENGLISH" ||
+        key === "MATHEMATICS" ||
+        key === "BIOLOGY" ||
+        key === "CHEMISTRY" ||
+        key === "PHYSICS"
+      ) continue;
+
+      if (record[key] !== undefined) {
         el.value = record[key];
       }
     }
 
-    // ===== SUBJECT FIX =====
-    function splitSubject(value) {
-      if (!value) return ["", ""];
+    /* ===== SUBJECT PARSER ===== */
+    function loadSubject(value, gradeEl, bodyEl) {
+
+      if (!value) {
+        gradeEl.value = "";
+        bodyEl.value = "";
+        return;
+      }
+
       const match = value.match(/^(.+?)\s*\((.+?)\)$/);
-      return match ? [match[1], match[2]] : [value, ""];
+
+      if (match) {
+        gradeEl.value = match[1].trim();
+        bodyEl.value = match[2].trim();
+      } else {
+        gradeEl.value = value;
+        bodyEl.value = "";
+      }
     }
 
-    let [g, b] = splitSubject(record.ENGLISH);
-    engGrade.value = g;
-    engBody.value = b;
+    loadSubject(record.ENGLISH, engGrade, engBody);
+    loadSubject(record.MATHEMATICS, mathGrade, mathBody);
+    loadSubject(record.BIOLOGY, bioGrade, bioBody);
+    loadSubject(record.CHEMISTRY, chemGrade, chemBody);
+    loadSubject(record.PHYSICS, phyGrade, phyBody);
 
-    [g, b] = splitSubject(record.MATHEMATICS);
-    mathGrade.value = g;
-    mathBody.value = b;
-
-    [g, b] = splitSubject(record.BIOLOGY);
-    bioGrade.value = g;
-    bioBody.value = b;
-
-    [g, b] = splitSubject(record.CHEMISTRY);
-    chemGrade.value = g;
-    chemBody.value = b;
-
-    [g, b] = splitSubject(record.PHYSICS);
-    phyGrade.value = g;
-    phyBody.value = b;
-
-    // ===== PASSPORT =====
+    /* ===== PASSPORT ===== */
     if (record.PASSPORT) {
       passportDataUrl = record.PASSPORT;
       previewContainer.innerHTML =
         `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
     }
 
-    alert("✅ Record loaded correctly");
+    alert("✅ Record loaded cleanly");
   });
 
   /* ================= SUBMIT ================= */
@@ -140,6 +151,10 @@ document.addEventListener("DOMContentLoaded", () => {
         passportUrl = img.secure_url;
       }
 
+      // 🔥 CLEAN SUBJECT VALUES BEFORE SAVING
+      const clean = (g, b) =>
+        g ? `${g.replace(/\(.+\)/g, "").trim()} (${b})` : "";
+
       const record = {
         SURNAME: form.surname.value.toUpperCase(),
         FIRSTNAME: form.firstname.value.toUpperCase(),
@@ -155,11 +170,11 @@ document.addEventListener("DOMContentLoaded", () => {
         OLEVEL_EXAM_NUMBER: form.olevel_exam.value,
         PASSPORT: passportUrl,
 
-        ENGLISH: `${engGrade.value} (${engBody.value})`,
-        MATHEMATICS: `${mathGrade.value} (${mathBody.value})`,
-        BIOLOGY: bioGrade.value ? `${bioGrade.value} (${bioBody.value})` : "",
-        CHEMISTRY: chemGrade.value ? `${chemGrade.value} (${chemBody.value})` : "",
-        PHYSICS: phyGrade.value ? `${phyGrade.value} (${phyBody.value})` : "",
+        ENGLISH: clean(engGrade.value, engBody.value),
+        MATHEMATICS: clean(mathGrade.value, mathBody.value),
+        BIOLOGY: clean(bioGrade.value, bioBody.value),
+        CHEMISTRY: clean(chemGrade.value, chemBody.value),
+        PHYSICS: clean(phyGrade.value, phyBody.value),
 
         REMARKS: form.remarks.value
       };
@@ -183,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
       location.reload();
 
     } catch (err) {
-      alert("Error: " + err);
+      alert(err);
       submitBtn.disabled = false;
       submitBtn.innerText = "SUBMIT";
     }
