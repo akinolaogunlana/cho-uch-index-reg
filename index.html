@@ -1,34 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>CHO INDEXING – Review & Edit</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>CHO INDEXING FORM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<style>
-body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }
-h2 { text-align: center; margin-bottom:20px; }
-form { max-width: 700px; margin:auto; background:#fff; padding:25px; border-radius:10px; box-shadow:0 5px 20px rgba(0,0,0,.1); }
-input, select, button { width:100%; padding:10px; margin-top:10px; }
-button { border:none; cursor:pointer; font-weight:bold; }
-#retrieveBtn { background:#1e88e5; color:#fff; }
-#submitBtn { background:#2ecc71; color:#fff; }
-#downloadPDFBtn { background:#4caf50; color:#fff; display:none; margin-top:5px; }
-#passportPreview img { max-width:120px; border-radius:8px; margin-top:10px; box-shadow:0 4px 15px rgba(0,0,0,0.15);}
-hr { margin:20px 0; }
-</style>
+  <!-- External Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.6.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    form {
+      max-width: 750px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.1);
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    label {
+      margin-top: 10px;
+      display: block;
+      font-weight: bold;
+    }
+    button {
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .primary { background:#1e88e5; color:#fff; }
+    .success { background:#2ecc71; color:#fff; }
+    .dark { background:#333; color:#fff; }
+    .hidden { display:none; }
+    hr { margin: 25px 0; }
+    #previewContainer img {
+      max-width: 150px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 
 <body>
 
-<h2>CHO INDEXING – Review & Edit</h2>
+<h2>CHO INDEXING – REVIEW & EDIT YOUR DETAILS</h2>
 
-<form id="indexForm">
+<form id="indexForm" enctype="multipart/form-data">
 
-  <!-- 🔐 Retrieval Section -->
-  <h3>Retrieve Record</h3>
-  <input name="firstname" placeholder="FIRSTNAME" required>
+  <!-- 🔍 RETRIEVE SECTION -->
+  <h3>🔍 Retrieve Your Record</h3>
+
+  <input name="firstname" placeholder="FIRST NAME (Used for retrieval)" required>
+
   <select name="bloodgroup" required>
     <option value="">SELECT BLOOD GROUP</option>
     <option>A+</option><option>A-</option>
@@ -36,36 +73,54 @@ hr { margin:20px 0; }
     <option>AB+</option><option>AB-</option>
     <option>O+</option><option>O-</option>
   </select>
+
   <select name="olevel_type" required>
     <option value="">SELECT O-LEVEL TYPE</option>
-    <option>WAEC</option><option>NECO</option><option>NABTEB</option>
-    <option>WAEC / WAEC</option><option>NECO / NECO</option><option>NABTEB / NABTEB</option>
-    <option>WAEC / NECO</option><option>NABTEB / WAEC</option><option>NABTEB / NECO</option>
+    <option>WAEC</option>
+    <option>NECO</option>
+    <option>NABTEB</option>
+    <option>WAEC / WAEC</option>
+    <option>NECO / NECO</option>
+    <option>NABTEB / NABTEB</option>
+    <option>WAEC / NECO</option>
+    <option>NABTEB / WAEC</option>
+    <option>NABTEB / NECO</option>
   </select>
-  <button type="button" id="retrieveBtn">🔍 Retrieve Record</button>
+
+  <button type="button" id="retrieveBtn" class="primary">
+    🔍 RETRIEVE MY RECORD
+  </button>
 
   <hr>
 
-  <!-- ✏️ Editable Section -->
-  <h3>Review & Correct Details</h3>
-  <input name="surname" placeholder="SURNAME" required>
-  <input name="othernames" placeholder="OTHERNAMES">
-  <select name="gender" required>
-    <option value="">SELECT GENDER</option><option>MALE</option><option>FEMALE</option>
-  </select>
-  <input name="state" placeholder="STATE">
-  <input name="lga_city_town" placeholder="LGA / CITY/TOWN">
-  <label>DATE OF BIRTH</label>
-  <input type="date" name="dob">
+  <!-- ✏️ EDITABLE SECTION -->
+  <h3>✏️ Review & Correct Your Details</h3>
 
-  <label>PASSPORT (JPG/PNG max 5MB)</label>
-  <input type="file" id="passport">
-  <div id="passportPreview"></div>
+  <input name="surname" placeholder="SURNAME">
+  <input name="othernames" placeholder="OTHERNAMES">
+
+  <select name="gender">
+    <option value="">SELECT GENDER</option>
+    <option>MALE</option>
+    <option>FEMALE</option>
+  </select>
+
+  <input name="state" placeholder="STATE">
+  <input name="lga_city_town" placeholder="LGA / CITY / TOWN">
+
+  <label>DATE OF BIRTH (DD/MM/YYYY)</label>
+  <input name="dob" placeholder="e.g. 14/06/1998">
 
   <input name="olevel_year" placeholder="O-LEVEL YEAR(S)">
   <input name="olevel_exam" placeholder="O-LEVEL EXAM NUMBER">
+
   <input name="alevel_type" placeholder="A-LEVEL TYPE">
   <input name="alevel_year" placeholder="A-LEVEL YEAR">
+
+  <label>UPLOAD / CHANGE PASSPORT (JPG / PNG)</label>
+  <input type="file" id="passport" accept="image/jpeg,image/png">
+
+  <div id="previewContainer"></div>
 
   <input id="engGrade" placeholder="ENGLISH GRADE">
   <select id="engBody"><option>WAEC</option><option>NECO</option><option>NABTEB</option></select>
@@ -84,160 +139,26 @@ hr { margin:20px 0; }
 
   <input name="remarks" placeholder="REMARKS">
 
-  <button type="submit" id="submitBtn">✅ Submit / Save Changes</button>
-  <button type="button" id="downloadPDFBtn">📄 Download Slip (PDF)</button>
+  <button type="submit" id="submitBtn" class="success">
+    ✅ SAVE / UPDATE MY INFORMATION
+  </button>
+
+  <button type="button" id="downloadPDFBtn" class="success hidden">
+    📄 DOWNLOAD MY SLIP (PDF)
+  </button>
+
+  <button type="button" id="adminLoginBtn" class="dark">
+    🔒 ADMIN LOGIN
+  </button>
+
+  <button type="button" id="downloadZipBtn" class="hidden">
+    📦 DOWNLOAD ALL PASSPORTS (ZIP)
+  </button>
+
 </form>
 
-<script>
-document.addEventListener("DOMContentLoaded", ()=>{
-const SHEETBEST_URL = "https://api.sheetbest.com/sheets/ceb9eddc-af9a-473a-9a32-f52c21c7f72b";
-const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
-const CLOUDINARY_DESTROY_URL = "https://api.cloudinary.com/v1_1/dpsbwjw83/image/destroy";
-const CLOUDINARY_PRESET = "cho_passports";
+<!-- MAIN SCRIPT -->
+<script src="script.js"></script>
 
-const form = document.getElementById("indexForm");
-const retrieveBtn = document.getElementById("retrieveBtn");
-const submitBtn = document.getElementById("submitBtn");
-const downloadPDFBtn = document.getElementById("downloadPDFBtn");
-const passportInput = document.getElementById("passport");
-const previewContainer = document.getElementById("passportPreview");
-
-let recordId = null;
-let recordData = null;
-let previousPublicId = null;
-
-function formatDOB(d){ if(!d) return ""; const x=new Date(d); return `${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}/${x.getFullYear()}`; }
-
-// ----- Retrieve by Firstname + Blood + Olevel -----
-retrieveBtn.onclick = async ()=>{
-  const firstname=form.firstname.value.trim().toUpperCase();
-  const blood=form.bloodgroup.value;
-  const olevel=form.olevel_type.value;
-  if(!firstname||!blood||!olevel){ alert("Complete all retrieval fields"); return; }
-  try{
-    const res = await fetch(SHEETBEST_URL);
-    const data = await res.json();
-    const found = data.find(r=>r.FIRSTNAME===firstname && r.BLOOD_GROUP===blood && r.OLEVEL_TYPE===olevel);
-    if(!found){ alert("❌ Record not found"); return; }
-
-    recordId = found.id; recordData = found;
-    previousPublicId = found.PASSPORT_PUBLIC_ID || null;
-
-    Object.keys(found).forEach(k=>{ if(form[k]) form[k].value=found[k]; });
-
-    submitBtn.disabled=false;
-    downloadPDFBtn.style.display="block";
-
-    if(found.PASSPORT) previewContainer.innerHTML=`<img src="${found.PASSPORT}">`;
-    alert("✅ Record retrieved. You can now edit any field.");
-  }catch(err){ console.error(err); alert("Failed to retrieve record"); }
-};
-
-// ----- Passport Upload & Automatic Deletion -----
-passportInput.addEventListener("change", async ()=>{
-  if(!recordData){ alert("Retrieve record first"); passportInput.value=""; return; }
-  const file = passportInput.files[0];
-  if(!file) return;
-  if(!["image/jpeg","image/png"].includes(file.type)){ alert("Only JPG/PNG"); passportInput.value=""; return; }
-  if(file.size>5*1024*1024){ alert("Max 5MB"); passportInput.value=""; return; }
-
-  previewContainer.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
-
-  try{
-    // 1️⃣ Delete previous passport if exists
-    if(previousPublicId){
-      await fetch(CLOUDINARY_DESTROY_URL,{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ public_id: previousPublicId, api_key: "YOUR_API_KEY", timestamp: Math.floor(Date.now()/1000), signature:"SIGNATURE" })
-      });
-    }
-
-    // 2️⃣ Upload new passport
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", CLOUDINARY_PRESET);
-    const res = await fetch(CLOUDINARY_URL,{method:"POST",body:formData});
-    const data = await res.json();
-    if(!data.secure_url) throw "Upload failed";
-
-    recordData.PASSPORT = data.secure_url;
-    recordData.PASSPORT_PUBLIC_ID = data.public_id;
-    previousPublicId = data.public_id;
-    alert("✅ Passport uploaded successfully.");
-  }catch(err){ console.error(err); alert("Passport upload failed"); }
-});
-
-// ----- Submit / Save Changes -----
-form.onsubmit = async e=>{
-  e.preventDefault();
-  if(!recordData) recordData = {};
-  const firstname=form.firstname.value.trim().toUpperCase();
-  const surname=form.surname.value.trim().toUpperCase();
-
-  try{
-    const existing = await fetch(SHEETBEST_URL);
-    const data = await existing.json();
-    const duplicate = data.find(r=>(r.FIRSTNAME===firstname && r.SURNAME===surname) && (!recordId || r.id!==recordId));
-    if(duplicate){ alert("❌ Duplicate FIRSTNAME + SURNAME detected"); return; }
-
-    const payload = {
-      FIRSTNAME: firstname,
-      SURNAME: surname,
-      OTHERNAMES: form.othernames.value,
-      BLOOD_GROUP: form.bloodgroup.value,
-      OLEVEL_TYPE: form.olevel_type.value,
-      GENDER: form.gender.value,
-      STATE: form.state.value,
-      LGA_CITY_TOWN: form.lga_city_town.value,
-      DATE_OF_BIRTH: formatDOB(form.dob.value),
-      OLEVEL_YEAR: form.olevel_year.value,
-      OLEVEL_EXAM_NUMBER: form.olevel_exam.value,
-      ALEVEL_TYPE: form.alevel_type.value,
-      ALEVEL_YEAR: form.alevel_year.value,
-      ENGLISH: `${engGrade.value} (${engBody.value})`,
-      MATHEMATICS: `${mathGrade.value} (${mathBody.value})`,
-      BIOLOGY: bioGrade.value?`${bioGrade.value} (${bioBody.value})`:"",
-      CHEMISTRY: chemGrade.value?`${chemGrade.value} (${chemBody.value})`:"",
-      PHYSICS: phyGrade.value?`${phyGrade.value} (${phyBody.value})`:"",
-      REMARKS: form.remarks.value,
-      PASSPORT: recordData?.PASSPORT || "",
-      PASSPORT_PUBLIC_ID: recordData?.PASSPORT_PUBLIC_ID || ""
-    };
-
-    if(recordId){
-      await fetch(`${SHEETBEST_URL}/${recordId}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) });
-      alert("✅ Record updated successfully");
-    }else{
-      await fetch(SHEETBEST_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify([payload]) });
-      alert("✅ Record submitted successfully");
-      recordId=payload.id; recordData=payload;
-      downloadPDFBtn.style.display="block";
-    }
-  }catch(err){ console.error(err); alert("Submission failed"); }
-};
-
-// ----- Download PDF -----
-downloadPDFBtn.onclick = ()=>{
-  if(!recordData) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let y=20;
-  doc.setFontSize(16);
-  doc.text("CHO INDEXING SLIP",105,y,{align:"center"}); y+=10;
-
-  Object.entries(recordData).forEach(([k,v])=>{
-    if(v && k!=="PASSPORT_PUBLIC_ID"){
-      doc.setFontSize(11);
-      doc.text(`${k.replace(/_/g," ")}: ${v}`,15,y);
-      y+=7;
-      if(y>280){ doc.addPage(); y=20; }
-    }
-  });
-
-  doc.save(`CHO_${recordData.FIRSTNAME}_SLIP.pdf`);
-};
-});
-</script>
 </body>
 </html>
