@@ -3,8 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const $ = id => document.getElementById(id);
 
   // ================= CONFIG =================
-  const SHEETBEST_URL = "https://api.sheetbest.com/sheets/ceb9eddc-af9a-473a-9a32-f52c21c7f72b";
-  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
+  const SHEETBEST_URL =
+    "https://api.sheetbest.com/sheets/ceb9eddc-af9a-473a-9a32-f52c21c7f72b";
+  const CLOUDINARY_URL =
+    "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
   const CLOUDINARY_PRESET = "cho_passports";
 
   const form = $("indexForm");
@@ -21,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   let passportDataUrl = "";
-  let recordId = null; // stores internal SheetBest ID for updating
+  let recordId = null; // 🔑 will hold the ID
 
   // ================= PASSPORT PREVIEW =================
   $("passport").addEventListener("change", function () {
@@ -47,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ================= SEARCH =================
   $("searchBtn").addEventListener("click", async () => {
+
     const surname = $("searchSurname").value.trim().toUpperCase();
     const blood   = $("searchBloodGroup").value.trim();
     const olevel  = $("searchOlevelType").value.trim();
@@ -56,71 +59,72 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    try {
-      const res = await fetch(SHEETBEST_URL);
-      const data = await res.json();
+    const res = await fetch(SHEETBEST_URL);
+    const data = await res.json();
 
-      // Search by SURNAME + BLOOD_GROUP + OLEVEL_TYPE
-      const record = data.find(r =>
-        r.SURNAME?.toUpperCase() === surname &&
-        r.BLOOD_GROUP?.toUpperCase() === blood.toUpperCase() &&
-        r.OLEVEL_TYPE?.toUpperCase() === olevel.toUpperCase()
-      );
+    // find record
+    const record = data.find(r =>
+      r.SURNAME?.toUpperCase() === surname &&
+      r.BLOOD_GROUP === blood &&
+      r.OLEVEL_TYPE === olevel
+    );
 
-      if (!record) {
-        alert("No record found.");
-        recordId = null;
+    if (!record) {
+      alert("No record found.");
+      return;
+    }
+
+    // Ensure record has ID
+    if (!record.ID) {
+      record.ID = `ID-${Date.now()}`; // generate unique ID if missing
+      await fetch(`${SHEETBEST_URL}/${record._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ID: record.ID })
+      });
+    }
+
+    recordId = record.ID;
+
+    // ===== NORMAL FIELDS =====
+    for (let el of form.elements) {
+      if (!el.name) continue;
+      const key = el.name.toUpperCase();
+      if (record[key] !== undefined) el.value = record[key];
+    }
+
+    // ===== SUBJECTS =====
+    Object.keys(subjects).forEach(sub => {
+      const value = record[sub];
+      const g = subjects[sub].grade;
+      const b = subjects[sub].body;
+
+      if (!g || !b) return;
+
+      if (!value) {
+        g.value = "";
+        b.value = "";
         return;
       }
 
-      // store internal SheetBest ID for PATCH
-      recordId = record.id;
-
-      // ===== NORMAL FIELDS =====
-      for (let el of form.elements) {
-        if (!el.name) continue;
-        const key = el.name.toUpperCase();
-        if (record[key] !== undefined) el.value = record[key];
-        else el.value = ""; // empty if field missing
+      const match = value.match(/^(.+?)\s*\((.+?)\)$/);
+      if (match) {
+        g.value = match[1].trim();
+        b.value = match[2].trim();
+      } else {
+        g.value = value;
+        b.value = "";
       }
+    });
 
-      // ===== SUBJECTS =====
-      Object.keys(subjects).forEach(sub => {
-        const value = record[sub];
-        const g = subjects[sub].grade;
-        const b = subjects[sub].body;
-
-        if (!g || !b) return;
-
-        if (!value) {
-          g.value = "";
-          b.value = "";
-          return;
-        }
-
-        const match = value.match(/^(.+?)\s*\((.+?)\)$/);
-        if (match) {
-          g.value = match[1].trim();
-          b.value = match[2].trim();
-        } else {
-          g.value = value;
-          b.value = "";
-        }
-      });
-
-      // ===== PASSPORT =====
-      if (record.PASSPORT) {
-        passportDataUrl = record.PASSPORT;
-        previewContainer.innerHTML =
-          `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
-      }
-
-      alert("✅ Record loaded successfully");
-
-    } catch (err) {
-      console.error(err);
-      alert("ERROR loading records: " + err);
+    // ===== PASSPORT =====
+    if (record.PASSPORT) {
+      passportDataUrl = record.PASSPORT;
+      previewContainer.innerHTML =
+        `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
     }
+
+    alert("✅ Record loaded successfully");
   });
 
   // ================= SUBMIT =================
@@ -138,7 +142,6 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       let passportUrl = passportDataUrl;
 
-      // Upload new passport if selected
       const file = $("passport").files[0];
       if (file) {
         const fd = new FormData();
@@ -149,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
           method: "POST",
           body: fd
         });
+
         const img = await upload.json();
         if (img?.secure_url) passportUrl = img.secure_url;
       }
@@ -171,7 +175,8 @@ document.addEventListener("DOMContentLoaded", () => {
         ALEVEL_YEAR: form.alevel_year?.value || "",
         PROFESSIONAL_CERTIFICATE_NUMBER: form.professional_certificate_number?.value || "",
         PASSPORT: passportUrl,
-        REMARKS: form.remarks?.value || ""
+        REMARKS: form.remarks?.value || "",
+        ID: recordId
       };
 
       // ===== SUBJECTS =====
@@ -181,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
         record[sub] = g ? `${g} (${b})` : "";
       });
 
-      // PATCH the record using internal SheetBest ID
+      // PATCH existing record using ID
       await fetch(`${SHEETBEST_URL}/${recordId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -193,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (err) {
       console.error(err);
-      alert("ERROR updating record: " + err);
+      alert("ERROR: " + err);
       submitBtn.disabled = false;
       submitBtn.innerText = "SUBMIT";
     }
