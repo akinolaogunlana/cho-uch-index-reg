@@ -17,15 +17,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ================= SUBJECT ELEMENTS =================
   const subjects = {
-    ENGLISH:    { grade: $("engGrade"),  body: $("engBody") },
-    MATHEMATICS:{ grade: $("mathGrade"), body: $("mathBody") },
-    BIOLOGY:    { grade: $("bioGrade"),  body: $("bioBody") },
-    CHEMISTRY:  { grade: $("chemGrade"), body: $("chemBody") },
-    PHYSICS:    { grade: $("phyGrade"),  body: $("phyBody") }
+    ENGLISH:     { grade: $("engGrade"),  body: $("engBody") },
+    MATHEMATICS: { grade: $("mathGrade"), body: $("mathBody") },
+    BIOLOGY:     { grade: $("bioGrade"),  body: $("bioBody") },
+    CHEMISTRY:   { grade: $("chemGrade"), body: $("chemBody") },
+    PHYSICS:     { grade: $("phyGrade"),  body: $("phyBody") }
   };
 
   let passportDataUrl = "";
-  let recordId = null;
+  let recordId = null; // 🔑 must exist to update
 
   // ================= PASSPORT PREVIEW =================
   $("passport").addEventListener("change", function () {
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     previewContainer.innerHTML = "";
     previewContainer.appendChild(img);
 
-    passportDataUrl = img.src; // store preview as data URL temporarily
+    passportDataUrl = img.src; // temporarily store preview
   });
 
   // ================= SEARCH =================
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = await res.json();
 
     const record = data.find(r =>
-      r.SURNAME === surname &&
+      r.SURNAME?.toUpperCase() === surname &&
       r.BLOOD_GROUP === blood &&
       r.OLEVEL_TYPE === olevel
     );
@@ -75,15 +75,14 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    recordId = record._id;
+    // store correct record ID to allow PATCH update
+    recordId = record.id; // <-- check your sheetbest field name, usually "id"
 
     // ===== NORMAL FIELDS =====
     for (let el of form.elements) {
       if (!el.name) continue;
       const key = el.name.toUpperCase();
-      if (record[key] !== undefined) {
-        el.value = record[key];
-      }
+      if (record[key] !== undefined) el.value = record[key];
     }
 
     // ===== SUBJECTS =====
@@ -123,6 +122,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // ================= SUBMIT =================
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    if (!recordId) {
+      alert("Please search and load a record first. Cannot update a non-existing record.");
+      return;
+    }
 
     submitBtn.disabled = true;
     submitBtn.innerText = "Saving...";
@@ -174,19 +178,14 @@ document.addEventListener("DOMContentLoaded", () => {
         record[sub] = g ? `${g} (${b})` : "";
       });
 
-      const url = recordId ? `${SHEETBEST_URL}/${recordId}` : SHEETBEST_URL;
-      const method = recordId ? "PUT" : "POST";
-
-      await fetch(url, {
-        method,
+      // Always PATCH existing record
+      await fetch(`${SHEETBEST_URL}/${recordId}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(recordId ? record : [record])
+        body: JSON.stringify(record)
       });
 
-      alert(recordId
-        ? "✅ Record updated successfully"
-        : "✅ Record saved successfully");
-
+      alert("✅ Record updated successfully");
       location.reload();
 
     } catch (err) {
