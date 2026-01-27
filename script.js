@@ -14,12 +14,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewContainer = document.getElementById("previewContainer");
 
   let passportDataUrl = "";
-  let currentRowId = null; // 🔑 for update
+  let currentRowId = null;
 
 
   // ================= PASSPORT PREVIEW =================
   document.getElementById("passport").addEventListener("change", function () {
-
     const file = this.files[0];
     if (!file) return;
 
@@ -78,10 +77,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // 🔑 store row id
     currentRowId = record.id;
 
-    // ===== Autofill ALL fields =====
+    // ✅ AUTO-FILL EVERYTHING
     for (let el of form.elements) {
       const key = el.name?.toUpperCase();
       if (key && record[key] !== undefined) {
@@ -89,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // ===== Passport =====
+    // Passport reload
     if (record.PASSPORT) {
       passportDataUrl = record.PASSPORT;
       previewContainer.innerHTML = `
@@ -111,13 +109,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
 
-      // ===== DOB check =====
-      const dob = form.dob.value.trim();
+      // DOB
+      const dob = form.date_of_birth.value.trim();
       if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dob)) {
         throw "Date must be DD/MM/YYYY";
       }
 
-      // ===== Passport upload =====
+      // Passport upload
       let passportUrl = passportDataUrl;
 
       const file = document.getElementById("passport").files[0];
@@ -141,15 +139,19 @@ document.addEventListener("DOMContentLoaded", () => {
         passportUrl = result.secure_url;
       }
 
-      // ===== Record object =====
+      // RECORD
       const record = {
         SURNAME: form.surname.value.toUpperCase(),
         FIRSTNAME: form.firstname.value.toUpperCase(),
         OTHERNAMES: form.othernames.value.toUpperCase(),
-        BLOOD_GROUP: form.bloodgroup.value,
+        BLOOD_GROUP: form.blood_group.value,
         OLEVEL_TYPE: form.olevel_type.value,
         OLEVEL_YEAR: form.olevel_year.value,
-        OLEVEL_EXAM_NUMBER: form.olevel_exam.value,
+        OLEVEL_EXAM_NUMBER: form.olevel_exam_number.value,
+        ALEVEL_TYPE: form.alevel_type.value,
+        ALEVEL_YEAR: form.alevel_year.value,
+        PROFESSIONAL_CERTIFICATE_NUMBER:
+          form.professional_certificate_number.value,
         CADRE: "CHO",
         GENDER: form.gender.value,
         STATE: form.state.value,
@@ -157,33 +159,31 @@ document.addEventListener("DOMContentLoaded", () => {
         DATE_OF_BIRTH: dob,
         PASSPORT: passportUrl,
 
-        ENGLISH: `${form.engGrade.value} (${form.engBody.value})`,
-        MATHEMATICS: `${form.mathGrade.value} (${form.mathBody.value})`,
-        BIOLOGY: form.bioGrade.value
-          ? `${form.bioGrade.value} (${form.bioBody.value})`
+        ENGLISH: `${form.english.value} (${engBody.value})`,
+        MATHEMATICS: `${form.mathematics.value} (${mathBody.value})`,
+        BIOLOGY: form.biology.value
+          ? `${form.biology.value} (${bioBody.value})`
           : "",
-        CHEMISTRY: form.chemGrade.value
-          ? `${form.chemGrade.value} (${form.chemBody.value})`
+        CHEMISTRY: form.chemistry.value
+          ? `${form.chemistry.value} (${chemBody.value})`
           : "",
-        PHYSICS: form.phyGrade.value
-          ? `${form.phyGrade.value} (${form.phyBody.value})`
+        PHYSICS: form.physics.value
+          ? `${form.physics.value} (${phyBody.value})`
           : "",
 
         REMARKS: form.remarks.value
       };
 
-      // ===== SAVE OR UPDATE =====
+      // SAVE OR UPDATE
       const method = currentRowId ? "PATCH" : "POST";
       const url = currentRowId
         ? `${SHEETBEST_URL}/${currentRowId}`
         : SHEETBEST_URL;
 
       await fetch(url, {
-        method: method,
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          currentRowId ? record : [record]
-        )
+        body: JSON.stringify(currentRowId ? record : [record])
       });
 
       alert(
