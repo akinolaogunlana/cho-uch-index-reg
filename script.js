@@ -170,4 +170,111 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  /* ================= DOWNLOAD SLIP ================= */
+
+  $("downloadPDFBtn").addEventListener("click", () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y = 10;
+
+    // Add passport if uploaded
+    const passportFile = $("passport").files[0];
+    if (passportFile) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const imgData = e.target.result;
+        doc.addImage(imgData, "JPEG", 150, 10, 40, 50);
+        drawSlip(doc);
+      };
+      reader.readAsDataURL(passportFile);
+    } else if (passportUrl) {
+      // If passport URL exists from search
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = passportUrl;
+      img.onload = function() {
+        doc.addImage(img, "JPEG", 150, 10, 40, 50);
+        drawSlip(doc);
+      };
+    } else {
+      drawSlip(doc);
+    }
+
+    function drawSlip(doc) {
+      // Title
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("CHO INDEXING SLIP", 105, y, { align: "center" });
+      y += 20;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+
+      // Personal Info
+      const fields = [
+        ["SURNAME", form.surname.value],
+        ["FIRST NAME", form.firstname.value],
+        ["OTHER NAMES", form.othernames.value],
+        ["GENDER", form.gender.value],
+        ["BLOOD GROUP", form.blood_group.value],
+        ["STATE", form.state.value],
+        ["LGA/CITY/TOWN", form.lga_city_town.value],
+        ["DATE OF BIRTH", form.date_of_birth.value],
+        ["O-LEVEL TYPE", form.olevel_type.value],
+        ["O-LEVEL YEAR(S)", form.olevel_year.value],
+        ["O-LEVEL EXAM NUMBER", form.olevel_exam_number.value],
+        ["A-LEVEL TYPE", form.alevel_type.value],
+        ["A-LEVEL YEAR", form.alevel_year.value],
+        ["PROFESSIONAL CERTIFICATE NO.", form.professional_certificate_number.value]
+      ];
+
+      fields.forEach(f => {
+        if (f[1]) {
+          doc.text(`${f[0]}: ${f[1]}`, 10, y);
+          y += 8;
+        }
+      });
+
+      y += 5;
+
+      // Subjects Table
+      doc.setFont("helvetica", "bold");
+      doc.text("Subjects", 10, y);
+      y += 6;
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Subject", 10, y);
+      doc.text("Grade", 80, y);
+      doc.text("Exam Body", 140, y);
+      y += 4;
+      doc.setLineWidth(0.5);
+      doc.line(10, y, 200, y);
+      y += 4;
+
+      doc.setFont("helvetica", "normal");
+
+      Object.keys(subjects).forEach(sub => {
+        const g = subjects[sub].grade.value || "-";
+        const b = subjects[sub].body.value || "-";
+        doc.text(sub, 10, y);
+        doc.text(g, 80, y);
+        doc.text(b, 140, y);
+        y += 8;
+      });
+
+      y += 5;
+
+      // Remarks
+      if (form.remarks.value) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Remarks:", 10, y);
+        y += 6;
+        doc.setFont("helvetica", "normal");
+        doc.text(form.remarks.value, 10, y);
+      }
+
+      doc.save("CHO_Slip.pdf");
+    }
+  });
+
 });
