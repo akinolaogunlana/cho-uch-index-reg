@@ -25,12 +25,11 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   let passportUrl = "";
-  let recordID = null;   // ✅ YOUR SHEET ID COLUMN VALUE
+  let recordID = null;
 
   /* ================= SEARCH RECORD ================= */
 
   $("searchBtn").addEventListener("click", async () => {
-
     const surname = $("searchSurname").value.trim().toUpperCase();
     const blood   = $("searchBloodGroup").value;
     const olevel  = $("searchOlevelType").value;
@@ -54,10 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    /* ✅ STORE YOUR ID COLUMN */
     recordID = record.ID;
-
-    /* ================= AUTO FILL ================= */
 
     for (let el of form.elements) {
       if (!el.name) continue;
@@ -67,8 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    /* ================= SUBJECT SPLIT ================= */
-
     Object.keys(subjects).forEach(sub => {
       const value = record[sub] || "";
       const match = value.match(/^(.+?)\s*\((.+?)\)$/);
@@ -77,13 +71,16 @@ document.addEventListener("DOMContentLoaded", () => {
       subjects[sub].body.value  = match ? match[2] : "";
     });
 
-    /* ================= PASSPORT ================= */
-
     if (record.PASSPORT) {
       passportUrl = record.PASSPORT;
       previewContainer.innerHTML =
         `<img src="${record.PASSPORT}" style="max-width:150px;border-radius:8px">`;
     }
+
+    // Automatically set default remark to "RETRAINEE" if empty
+    form.remarks.value = record.REMARKS && record.REMARKS.trim() !== "" 
+      ? record.REMARKS 
+      : "RETRAINEE";
 
     alert("✅ Record loaded. You can now edit.");
   });
@@ -102,9 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
     submitBtn.innerText = "Updating...";
 
     try {
-
-      /* ========= PASSPORT UPLOAD ========= */
-
       const file = $("passport").files[0];
       if (file) {
         const fd = new FormData();
@@ -120,10 +114,8 @@ document.addEventListener("DOMContentLoaded", () => {
         passportUrl = img.secure_url;
       }
 
-      /* ========= BUILD UPDATE OBJECT ========= */
-
       const record = {
-        ID: recordID, // 🔑 REQUIRED
+        ID: recordID,
         SURNAME: form.surname.value.toUpperCase(),
         FIRSTNAME: form.firstname.value.toUpperCase(),
         OTHERNAMES: form.othernames.value?.toUpperCase() || "",
@@ -144,15 +136,12 @@ document.addEventListener("DOMContentLoaded", () => {
         REMARKS: form.remarks.value
       };
 
-      /* ========= SUBJECT SAVE ========= */
-
       Object.keys(subjects).forEach(sub => {
         const g = subjects[sub].grade.value.trim();
         const b = subjects[sub].body.value.trim();
         record[sub] = g ? `${g} (${b})` : "";
       });
 
-      /* ✅ PATCH = SAFE UPDATE */
       await fetch(`${SHEETBEST_URL}/ID/${recordID}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -170,15 +159,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  /* ================= DOWNLOAD SLIP ================= */
+  /* ================= DOWNLOAD PROFESSIONAL SLIP ================= */
 
   $("downloadPDFBtn").addEventListener("click", async () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     let y = 10;
 
-    // Load passport image if available
-    async function getPassportData() {
+    // Load passport image
+    async function getBase64Image() {
       const fileInput = $("passport").files[0];
       if (fileInput) {
         return new Promise(resolve => {
@@ -194,20 +183,18 @@ document.addEventListener("DOMContentLoaded", () => {
             const canvas = document.createElement("canvas");
             canvas.width = img.width;
             canvas.height = img.height;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0);
+            canvas.getContext("2d").drawImage(img, 0, 0);
             resolve(canvas.toDataURL("image/jpeg"));
           };
           img.src = passportUrl;
         });
-      } else {
-        return null;
       }
+      return null;
     }
 
-    const passportData = await getPassportData();
-    if (passportData) {
-      doc.addImage(passportData, "JPEG", 150, 10, 40, 50);
+    const base64Img = await getBase64Image();
+    if (base64Img) {
+      doc.addImage(base64Img, "JPEG", 150, 10, 40, 50);
     }
 
     // Title
@@ -246,32 +233,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
     y += 5;
 
-    // Subjects table
-    doc.setFont("helvetica", "bold");
-    doc.text("Subjects", 10, y);
-    y += 6;
+    // Subjects Table
+    const tableX = 10;
+    const tableY = y;
+    const rowHeight = 8;
+    const colWidths = [70, 40, 50]; // Subject, Grade, Exam Body
 
+    // Table header
     doc.setFont("helvetica", "bold");
-    doc.text("Subject", 10, y);
-    doc.text("Grade", 80, y);
-    doc.text("Exam Body", 140, y);
-    y += 4;
-    doc.setLineWidth(0.5);
-    doc.line(10, y, 200, y);
-    y += 4;
+    doc.setFillColor(200, 200, 200);
+    doc.rect(tableX, tableY, colWidths.reduce((a,b)=>a+b,0), rowHeight, 'FD'); // header background
+    doc.text("Subject", tableX + 2, tableY + 6);
+    doc.text("Grade", tableX + colWidths[0] + 2, tableY + 6);
+    doc.text("Exam Body", tableX + colWidths[0] + colWidths[1] + 2, tableY + 6);
 
+    // Table rows
     doc.setFont("helvetica", "normal");
-
+    let currentY = tableY + rowHeight;
     Object.keys(subjects).forEach(sub => {
-      const g = subjects[sub].grade.value || "-";
-      const b = subjects[sub].body.value || "-";
-      doc.text(sub, 10, y);
-      doc.text(g, 80, y);
-      doc.text(b, 140, y);
-      y += 8;
+      doc.rect(tableX, currentY, colWidths[0], rowHeight); // subject cell
+      doc.rect(tableX + colWidths[0], currentY, colWidths[1], rowHeight); // grade
+      doc.rect(tableX + colWidths[0] + colWidths[1], currentY, colWidths[2], rowHeight); // exam body
+      doc.text(sub, tableX + 2, currentY + 6);
+      doc.text(subjects[sub].grade.value || "-", tableX + colWidths[0] + 2, currentY + 6);
+      doc.text(subjects[sub].body.value || "-", tableX + colWidths[0] + colWidths[1] + 2, currentY + 6);
+      currentY += rowHeight;
     });
 
-    y += 5;
+    y = currentY + 5;
 
     // Remarks
     if (form.remarks.value) {
