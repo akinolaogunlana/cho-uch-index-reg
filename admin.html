@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CHO Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial;
+  padding: 20px;
+  background: #f4f6f8;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th, td {
+  padding: 8px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+}
+
+th {
+  background: #2c3e50;
+  color: white;
+}
+
+button {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.search {
+  margin-bottom: 15px;
+}
+
+input {
+  padding: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🔐 CHO Admin Edit Dashboard</h2>
+
+<div class="search">
+  <input id="searchBox" placeholder="Search surname or firstname">
+</div>
+
+<table>
+<thead>
+<tr>
+  <th>#</th>
+  <th>Surname</th>
+  <th>Firstname</th>
+  <th>Blood</th>
+  <th>O-Level</th>
+  <th>Action</th>
+</tr>
+</thead>
+
+<tbody id="tableBody"></tbody>
+</table>
+
+<script src="admin.js"></script>
+</body>
+</html>
