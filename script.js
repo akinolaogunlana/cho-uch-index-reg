@@ -164,3 +164,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+// ================= ADMIN EDIT LOAD =================
+const editID = localStorage.getItem("editID");
+
+if (editID) {
+  fetch(`${SHEETBEST_URL}/${editID}`)
+    .then(res => res.json())
+    .then(record => {
+
+      document.getElementById("recordId").value = record.ID;
+
+      for (let el of form.elements) {
+        if (!el.name) continue;
+        const key = el.name.toUpperCase();
+        if (record[key] !== undefined) {
+          el.value = record[key];
+        }
+      }
+
+      // subjects
+      const map = {
+        ENGLISH: ["engGrade", "engBody"],
+        MATHEMATICS: ["mathGrade", "mathBody"],
+        BIOLOGY: ["bioGrade", "bioBody"],
+        CHEMISTRY: ["chemGrade", "chemBody"],
+        PHYSICS: ["phyGrade", "phyBody"]
+      };
+
+      for (let s in map) {
+        if (!record[s]) continue;
+        const [g, b] = record[s].split("(");
+        document.getElementById(map[s][0]).value = g.trim();
+        document.getElementById(map[s][1]).value =
+          record[s].match(/\((.*?)\)/)?.[1] || "";
+      }
+
+      localStorage.removeItem("editID");
+      alert("Admin editing record loaded");
+    });
+}
