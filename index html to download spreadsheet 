@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CHO INDEXING FORM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- PDF & ZIP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.6.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- XLSX for Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+
+<h2>CHO INDEXING DATA COLLECTION</h2>
+
+<!-- ================= SEARCH ================= -->
+
+<h3>🔍 Find Your Submission</h3>
+
+<input id="searchSurname" placeholder="SURNAME">
+
+<select id="searchBloodGroup">
+  <option value="">SELECT BLOOD GROUP</option>
+  <option>A+</option><option>A-</option>
+  <option>B+</option><option>B-</option>
+  <option>AB+</option><option>AB-</option>
+  <option>O+</option><option>O-</option>
+</select>
+
+<select id="searchOlevelType">
+  <option value="">SELECT O-LEVEL TYPE</option>
+  <option>WAEC</option>
+  <option>NECO</option>
+  <option>NABTEB</option>
+  <option>WAEC / WAEC</option>
+  <option>NECO / NECO</option>
+  <option>NABTEB / NABTEB</option>
+  <option>WAEC / NECO</option>
+  <option>NECO / WAEC</option>
+  <option>NABTEB / WAEC</option>
+  <option>NABTEB / NECO</option>
+</select>
+
+<button type="button" id="searchBtn">Find My Record</button>
+
+<div id="searchWarning" style="color:red;margin-top:6px;"></div>
+
+<hr>
+
+<!-- ================= FORM ================= -->
+
+<form id="indexForm" enctype="multipart/form-data">
+
+  <input type="hidden" id="recordId" name="ID">
+
+  <input name="surname" placeholder="SURNAME" required>
+  <input name="firstname" placeholder="FIRST NAME" required>
+  <input name="othernames" placeholder="OTHER NAMES (optional)">
+
+  <label>Passport (JPG / PNG only – max 5MB)</label>
+  <input type="file" id="passport" accept="image/jpeg,image/png">
+
+  <input name="cadre" value="CHO" readonly>
+
+  <select name="gender" required>
+    <option value="">SELECT GENDER</option>
+    <option>MALE</option>
+    <option>FEMALE</option>
+  </select>
+
+  <select name="blood_group" required>
+    <option value="">SELECT BLOOD GROUP</option>
+    <option>A+</option><option>A-</option>
+    <option>B+</option><option>B-</option>
+    <option>AB+</option><option>AB-</option>
+    <option>O+</option><option>O-</option>
+  </select>
+
+  <input name="state" placeholder="STATE">
+  <input name="lga_city_town" placeholder="LGA / CITY / TOWN">
+
+  <label>Date of Birth (DD/MM/YYYY)</label>
+  <input name="date_of_birth" placeholder="DD/MM/YYYY" required>
+
+  <select name="olevel_type" required>
+    <option value="">SELECT O-LEVEL TYPE</option>
+    <option>WAEC</option>
+    <option>NECO</option>
+    <option>NABTEB</option>
+    <option>WAEC / WAEC</option>
+    <option>NECO / NECO</option>
+    <option>NABTEB / NABTEB</option>
+    <option>WAEC / NECO</option>
+    <option>NABTEB / WAEC</option>
+    <option>NABTEB / NECO</option>
+  </select>
+
+  <input name="olevel_year" placeholder="O-LEVEL YEAR(S)">
+  <input name="olevel_exam_number" placeholder="O-LEVEL EXAM NUMBER">
+
+  <input name="alevel_type" placeholder="A-LEVEL TYPE">
+  <input name="alevel_year" placeholder="A-LEVEL YEAR">
+
+  <input name="professional_certificate_number" placeholder="PROFESSIONAL CERTIFICATE NUMBER">
+
+  <hr>
+
+  <!-- SUBJECTS -->
+
+  <label>ENGLISH</label>
+  <input id="engGrade" placeholder="GRADE">
+  <select id="engBody">
+    <option>WAEC</option>
+    <option>NECO</option>
+    <option>NABTEB</option>
+  </select>
+
+  <label>MATHEMATICS</label>
+  <input id="mathGrade" placeholder="GRADE">
+  <select id="mathBody">
+    <option>WAEC</option>
+    <option>NECO</option>
+    <option>NABTEB</option>
+  </select>
+
+  <label>BIOLOGY</label>
+  <input id="bioGrade" placeholder="GRADE">
+  <select id="bioBody">
+    <option>WAEC</option>
+    <option>NECO</option>
+    <option>NABTEB</option>
+  </select>
+
+  <label>CHEMISTRY</label>
+  <input id="chemGrade" placeholder="GRADE">
+  <select id="chemBody">
+    <option>WAEC</option>
+    <option>NECO</option>
+    <option>NABTEB</option>
+  </select>
+
+  <label>PHYSICS</label>
+  <input id="phyGrade" placeholder="GRADE">
+  <select id="phyBody">
+    <option>WAEC</option>
+    <option>NECO</option>
+    <option>NABTEB</option>
+  </select>
+
+  <hr>
+
+  <input name="remarks" placeholder="REMARKS">
+
+  <!-- BUTTONS -->
+
+  <button type="submit">SUBMIT / UPDATE</button>
+
+  <button type="button" id="downloadPDFBtn" style="margin-top:10px;background:#4caf50;color:white;">
+    Download My Submission PDF
+  </button>
+
+  <button type="button" id="adminLoginBtn" style="margin-top:10px;background:#333;color:white;">
+    Admin Login
+  </button>
+
+  <button type="button" id="downloadExcelBtn" style="margin-top:10px;display:none;">
+    Download Standard Sheet (Admin Only)
+  </button>
+
+  <div id="previewContainer" style="margin-top:15px;text-align:center;"></div>
+
+</form>
+
+<script src="script.js"></script>
+
+</body>
+</html>
