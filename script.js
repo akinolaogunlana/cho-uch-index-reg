@@ -140,51 +140,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= ADMIN EXCEL DOWNLOAD ================= */
   $("downloadExcelBtn").addEventListener("click", async () => {
-    if (!isAdmin) return;
+  if (!isAdmin) return;
 
-    const res = await fetch(SHEETBEST_URL);
-    const data = await res.json();
+  const res = await fetch(SHEETBEST_URL);
+  const data = await res.json();
 
-    const split = v => {
-      const m = (v || "").match(/^(.+?)\s*\((.+?)\)$/);
-      return m ? [m[1], m[2]] : [v || "", ""];
-    };
-
-    const sheet = [[
-      "S/N","SURNAME","FIRST NAME","OTHER NAMES","CADRE","GENDER",
-      "BLOOD GROUP","STATE","LGA / CITY / TOWN","DATE OF BIRTH",
-      "O-LEVEL TYPE","O-LEVEL YEAR(S)","O-LEVEL EXAM NUMBER",
-      "A-LEVEL TYPE","A-LEVEL YEAR",
-      "PROFESSIONAL CERTIFICATE NUMBER",
-      "ENGLISH GRADE","ENGLISH BODY",
-      "MATHEMATICS GRADE","MATHEMATICS BODY",
-      "BIOLOGY GRADE","BIOLOGY BODY",
-      "CHEMISTRY GRADE","CHEMISTRY BODY",
-      "PHYSICS GRADE","PHYSICS BODY",
-      "REMARKS"
-    ]];
-
-    data.forEach((r,i)=>{
-      const [eG,eB]=split(r.ENGLISH);
-      const [mG,mB]=split(r.MATHEMATICS);
-      const [bG,bB]=split(r.BIOLOGY);
-      const [cG,cB]=split(r.CHEMISTRY);
-      const [pG,pB]=split(r.PHYSICS);
-
-      sheet.push([
-        i+1,r.SURNAME,r.FIRSTNAME,r.OTHERNAMES,r.CADRE,r.GENDER,
-        r.BLOOD_GROUP,r.STATE,r.LGA_CITY_TOWN,r.DATE_OF_BIRTH,
-        r.OLEVEL_TYPE,r.OLEVEL_YEAR,r.OLEVEL_EXAM_NUMBER,
-        r.ALEVEL_TYPE,r.ALEVEL_YEAR,
-        r.PROFESSIONAL_CERTIFICATE_NUMBER,
-        eG,eB,mG,mB,bG,bB,cG,cB,pG,pB,r.REMARKS
-      ]);
-    });
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(sheet);
-    XLSX.utils.book_append_sheet(wb, ws, "CHO STANDARD SHEET");
-    XLSX.writeFile(wb, "CHO_STANDARD_ADMIN_SHEET.xlsx");
+  // SORT alphabetically by SURNAME
+  data.sort((a, b) => {
+    const nameA = (a.SURNAME || "").toUpperCase();
+    const nameB = (b.SURNAME || "").toUpperCase();
+    if (nameA < nameB) return -1;
+    if (nameA > nameB) return 1;
+    return 0;
   });
 
+  const split = v => {
+    const m = (v || "").match(/^(.+?)\s*\((.+?)\)$/);
+    return m ? [m[1], m[2]] : [v || "", ""];
+  };
+
+  const sheet = [[
+    "S/N","SURNAME","FIRST NAME","OTHER NAMES","CADRE","GENDER",
+    "BLOOD GROUP","STATE","LGA / CITY / TOWN","DATE OF BIRTH",
+    "O-LEVEL TYPE","O-LEVEL YEAR(S)","O-LEVEL EXAM NUMBER",
+    "A-LEVEL TYPE","A-LEVEL YEAR",
+    "PROFESSIONAL CERTIFICATE NUMBER",
+    "ENGLISH GRADE","ENGLISH BODY",
+    "MATHEMATICS GRADE","MATHEMATICS BODY",
+    "BIOLOGY GRADE","BIOLOGY BODY",
+    "CHEMISTRY GRADE","CHEMISTRY BODY",
+    "PHYSICS GRADE","PHYSICS BODY",
+    "REMARKS"
+  ]];
+
+  data.forEach((r, i) => {
+    const [eG, eB] = split(r.ENGLISH);
+    const [mG, mB] = split(r.MATHEMATICS);
+    const [bG, bB] = split(r.BIOLOGY);
+    const [cG, cB] = split(r.CHEMISTRY);
+    const [pG, pB] = split(r.PHYSICS);
+
+    sheet.push([
+      i + 1, r.SURNAME, r.FIRSTNAME, r.OTHERNAMES, r.CADRE, r.GENDER,
+      r.BLOOD_GROUP, r.STATE, r.LGA_CITY_TOWN, r.DATE_OF_BIRTH,
+      r.OLEVEL_TYPE, r.OLEVEL_YEAR, r.OLEVEL_EXAM_NUMBER,
+      r.ALEVEL_TYPE, r.ALEVEL_YEAR,
+      r.PROFESSIONAL_CERTIFICATE_NUMBER,
+      eG, eB, mG, mB, bG, bB, cG, cB, pG, pB, r.REMARKS
+    ]);
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(sheet);
+  XLSX.utils.book_append_sheet(wb, ws, "CHO STANDARD SHEET");
+  XLSX.writeFile(wb, "CHO_STANDARD_ADMIN_SHEET.xlsx");
 });
