@@ -4,243 +4,180 @@
   <meta charset="UTF-8">
   <title>CHO INDEXING FORM</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="style.css">
 
+  <!-- PDF & ZIP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.6.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- XLSX for Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
+
 <body>
 
 <h2>CHO INDEXING DATA COLLECTION</h2>
 
+<!-- ================= SEARCH ================= -->
+
+<h3>🔍 Find Your Submission</h3>
+
+<input id="searchSurname" placeholder="SURNAME">
+
+<select id="searchBloodGroup">
+  <option value="">SELECT BLOOD GROUP</option>
+  <option>A+</option><option>A-</option>
+  <option>B+</option><option>B-</option>
+  <option>AB+</option><option>AB-</option>
+  <option>O+</option><option>O-</option>
+</select>
+
+<select id="searchOlevelType">
+  <option value="">SELECT O-LEVEL TYPE</option>
+  <option>WAEC</option>
+  <option>NECO</option>
+  <option>NABTEB</option>
+  <option>WAEC / WAEC</option>
+  <option>NECO / NECO</option>
+  <option>NABTEB / NABTEB</option>
+  <option>WAEC / NECO</option>
+  <option>NECO / WAEC</option>
+  <option>NABTEB / WAEC</option>
+  <option>NABTEB / NECO</option>
+</select>
+
+<button type="button" id="searchBtn">Find My Record</button>
+
+<div id="searchWarning" style="color:red;margin-top:6px;"></div>
+
+<hr>
+
+<!-- ================= FORM ================= -->
+
 <form id="indexForm" enctype="multipart/form-data">
 
-  <input name="surname" placeholder="SURNAME" required>
-  <input name="firstname" placeholder="FIRSTNAME" required>
-  <input name="othernames" placeholder="OTHERNAMES">
+  <input type="hidden" id="recordId" name="ID">
 
-  <label>PASSPORT (JPG / PNG, Max 5MB)</label>
-  <input type="file" id="passport" accept="image/jpeg,image/png" required>
+  <input name="surname" placeholder="SURNAME" required>
+  <input name="firstname" placeholder="FIRST NAME" required>
+  <input name="othernames" placeholder="OTHER NAMES (optional)">
+
+  <label>Passport (JPG / PNG only – max 5MB)</label>
+  <input type="file" id="passport" accept="image/jpeg,image/png">
 
   <input name="cadre" value="CHO" readonly>
 
   <select name="gender" required>
     <option value="">SELECT GENDER</option>
-    <option value="MALE">MALE</option>
-    <option value="FEMALE">FEMALE</option>
+    <option>MALE</option>
+    <option>FEMALE</option>
   </select>
 
-  <input name="bloodgroup" placeholder="BLOOD GROUP">
+  <select name="blood_group" required>
+    <option value="">SELECT BLOOD GROUP</option>
+    <option>A+</option><option>A-</option>
+    <option>B+</option><option>B-</option>
+    <option>AB+</option><option>AB-</option>
+    <option>O+</option><option>O-</option>
+  </select>
+
   <input name="state" placeholder="STATE">
-  <input name="lga_city_town" placeholder="LGA / CITY/TOWN">
+  <input name="lga_city_town" placeholder="LGA / CITY / TOWN">
 
-  <label>DATE OF BIRTH</label>
-  <input type="date" name="dob" required>
+  <label>Date of Birth (DD/MM/YYYY)</label>
+  <input name="date_of_birth" placeholder="DD/MM/YYYY" required>
 
-  <!-- UPDATED O-LEVEL TYPE -->
   <select name="olevel_type" required>
     <option value="">SELECT O-LEVEL TYPE</option>
-    <option value="WAEC">WAEC</option>
-    <option value="NECO">NECO</option>
-    <option value="NABTEB">NABTEB</option>
-    <option value="WAEC / WAEC">WAEC / WAEC</option>
-    <option value="NECO / NECO">NECO / NECO</option>
-    <option value="NABTEB / NABTEB">NABTEB / NABTEB</option>
-    <option value="WAEC / NECO">WAEC / NECO</option>
-    <option value="NABTEB / WAEC">NABTEB / WAEC</option>
-    <option value="NABTEB / NECO">NABTEB / NECO</option>
+    <option>WAEC</option>
+    <option>NECO</option>
+    <option>NABTEB</option>
+    <option>WAEC / WAEC</option>
+    <option>NECO / NECO</option>
+    <option>NABTEB / NABTEB</option>
+    <option>WAEC / NECO</option>
+    <option>NABTEB / WAEC</option>
+    <option>NABTEB / NECO</option>
   </select>
 
   <input name="olevel_year" placeholder="O-LEVEL YEAR(S)">
-  <input name="olevel_exam" placeholder="O-LEVEL EXAM NUMBER">
+  <input name="olevel_exam_number" placeholder="O-LEVEL EXAM NUMBER">
 
   <input name="alevel_type" placeholder="A-LEVEL TYPE">
   <input name="alevel_year" placeholder="A-LEVEL YEAR">
-  <input name="pro_cert" placeholder="PROFESSIONAL CERTIFICATE NUMBER">
 
-  <!-- SUBJECTS WITH NABTEB INCLUDED -->
-  <input id="engGrade" placeholder="ENGLISH GRADE" required>
+  <input name="professional_certificate_number" placeholder="PROFESSIONAL CERTIFICATE NUMBER">
+
+  <hr>
+
+  <!-- SUBJECTS -->
+
+  <label>ENGLISH</label>
+  <input id="engGrade" placeholder="GRADE">
   <select id="engBody">
     <option>WAEC</option>
     <option>NECO</option>
     <option>NABTEB</option>
   </select>
 
-  <input id="mathGrade" placeholder="MATHEMATICS GRADE" required>
+  <label>MATHEMATICS</label>
+  <input id="mathGrade" placeholder="GRADE">
   <select id="mathBody">
     <option>WAEC</option>
     <option>NECO</option>
     <option>NABTEB</option>
   </select>
 
-  <input id="bioGrade" placeholder="BIOLOGY GRADE">
+  <label>BIOLOGY</label>
+  <input id="bioGrade" placeholder="GRADE">
   <select id="bioBody">
     <option>WAEC</option>
     <option>NECO</option>
     <option>NABTEB</option>
   </select>
 
-  <input id="chemGrade" placeholder="CHEMISTRY GRADE">
+  <label>CHEMISTRY</label>
+  <input id="chemGrade" placeholder="GRADE">
   <select id="chemBody">
     <option>WAEC</option>
     <option>NECO</option>
     <option>NABTEB</option>
   </select>
 
-  <input id="phyGrade" placeholder="PHYSICS GRADE">
+  <label>PHYSICS</label>
+  <input id="phyGrade" placeholder="GRADE">
   <select id="phyBody">
     <option>WAEC</option>
     <option>NECO</option>
     <option>NABTEB</option>
   </select>
 
+  <hr>
+
   <input name="remarks" placeholder="REMARKS">
 
-  <button type="submit">SUBMIT</button>
+  <!-- BUTTONS -->
 
-  <button type="button" id="downloadPDFBtn" style="margin-top:10px;background:#4caf50;color:#fff;">
+  <button type="submit">SUBMIT / UPDATE</button>
+
+  <button type="button" id="downloadPDFBtn" style="margin-top:10px;background:#4caf50;color:white;">
     Download My Submission PDF
   </button>
 
-  <button type="button" id="adminLoginBtn" style="margin-top:10px;background:#333;color:#fff;">
+  <button type="button" id="adminLoginBtn" style="margin-top:10px;background:#333;color:white;">
     Admin Login
   </button>
 
-  <button type="button" id="downloadZipBtn" style="margin-top:10px;display:none;">
-    Download All Passports (ZIP)
+  <button type="button" id="downloadExcelBtn" style="margin-top:10px;display:none;">
+    Download Standard Sheet (Admin Only)
   </button>
 
-  <div id="previewContainer" style="margin:15px 0;text-align:center;"></div>
+  <div id="previewContainer" style="margin-top:15px;text-align:center;"></div>
+
 </form>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-  const SHEETBEST_URL = "https://api.sheetbest.com/sheets/ceb9eddc-af9a-473a-9a32-f52c21c7f72b";
-  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dpsbwjw83/image/upload";
-  const CLOUDINARY_PRESET = "cho_passports";
-  const ADMIN_PASSWORD = "CHO@2026Secure!";
-
-  const form = document.getElementById("indexForm");
-  const submitBtn = form.querySelector("button[type='submit']");
-  const downloadPDFBtn = document.getElementById("downloadPDFBtn");
-  const adminLoginBtn = document.getElementById("adminLoginBtn");
-  const downloadZipBtn = document.getElementById("downloadZipBtn");
-  const previewContainer = document.getElementById("previewContainer");
-
-  let passportDataUrl = "";
-
-  document.getElementById("passport").addEventListener("change", function () {
-    previewContainer.innerHTML = "";
-    const file = this.files[0];
-    if(file){
-      if(!["image/jpeg","image/png"].includes(file.type)){ alert("Only JPG/PNG allowed"); this.value=""; return;}
-      if(file.size>5*1024*1024){ alert("Max 5MB"); this.value=""; return;}
-      const img=document.createElement("img");
-      img.style.maxWidth="150px";
-      img.style.borderRadius="8px";
-      img.style.boxShadow="0 4px 15px rgba(0,0,0,0.15)";
-      img.onload=()=>{const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext("2d").drawImage(img,0,0); passportDataUrl=c.toDataURL("image/jpeg");};
-      img.src=URL.createObjectURL(file);
-      previewContainer.appendChild(img);
-    }
-  });
-
-  function formatDOB(dateStr){ if(!dateStr) return ""; const d=new Date(dateStr); return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`; }
-
-  downloadPDFBtn.addEventListener("click", ()=>{
-    const { jsPDF } = window.jspdf;
-    const doc=new jsPDF();
-    let y=20;
-    doc.setFontSize(18); doc.text("CHO Indexing Form",105,y,{align:"center"}); y+=10;
-    if(passportDataUrl){doc.addImage(passportDataUrl,"JPEG",80,y,50,50); y+=60;}
-    doc.setFontSize(12);
-    const fields=[["SURNAME", form.surname.value.toUpperCase()], ["FIRSTNAME", form.firstname.value.toUpperCase()], ["OTHERNAMES", form.othernames.value.toUpperCase()], ["CADRE", form.cadre.value], ["GENDER", form.gender.value], ["BLOOD GROUP", form.bloodgroup.value], ["STATE", form.state.value], ["LGA / CITY/TOWN", form.lga_city_town.value], ["DATE OF BIRTH", formatDOB(form.dob.value)], ["O-LEVEL TYPE", form.olevel_type.value], ["O-LEVEL YEAR", form.olevel_year.value], ["O-LEVEL EXAM NO.", form.olevel_exam.value], ["A-LEVEL TYPE", form.alevel_type.value], ["A-LEVEL YEAR", form.alevel_year.value], ["PROFESSIONAL CERT. NO.", form.pro_cert.value], ["ENGLISH", `${document.getElementById("engGrade").value} (${document.getElementById("engBody").value})`], ["MATHEMATICS", `${document.getElementById("mathGrade").value} (${document.getElementById("mathBody").value})`], ["BIOLOGY", document.getElementById("bioGrade").value ? `${document.getElementById("bioGrade").value} (${document.getElementById("bioBody").value})`:""], ["CHEMISTRY", document.getElementById("chemGrade").value ? `${document.getElementById("chemGrade").value} (${document.getElementById("chemBody").value})`:""], ["PHYSICS", document.getElementById("phyGrade").value ? `${document.getElementById("phyGrade").value} (${document.getElementById("phyBody").value})`:""], ["REMARKS", form.remarks.value]];
-    fields.forEach(([label,value])=>{doc.text(`${label}: ${value}`,20,y); y+=8; if(y>280){doc.addPage();y=20;}});
-    doc.save(`CHO_Form_${form.surname.value}_${form.firstname.value}.pdf`);
-  });
-
-  function requireAdminAccess(){ const entered=prompt("🔒 Admin Password:"); if(entered!==ADMIN_PASSWORD){alert("❌ Access Denied"); return false;} return true; }
-
-  adminLoginBtn.addEventListener("click", ()=>{ if(requireAdminAccess()){downloadZipBtn.style.display="inline-block"; adminLoginBtn.style.display="none"; alert("✅ Admin access granted");}});
-
-  downloadZipBtn.addEventListener("click", async ()=>{
-    if(!requireAdminAccess()) return;
-    downloadZipBtn.disabled=true; downloadZipBtn.innerText="Preparing ZIP...";
-    try{
-      const res=await fetch(SHEETBEST_URL); const allData=await res.json();
-      const zip=new JSZip(); const imgFolder=zip.folder("passports");
-      for(let i=0;i<allData.length;i++){const r=allData[i]; if(r.PASSPORT){const blob=await (await fetch(r.PASSPORT)).blob(); imgFolder.file(`${r.SURNAME}_${r.FIRSTNAME}_${i+1}.jpg`,blob);}}
-      const content=await zip.generateAsync({type:"blob"}); const a=document.createElement("a"); a.href=URL.createObjectURL(content); a.download="CHO_Passports.zip"; a.click();
-    }catch(err){alert("Failed to create ZIP"); console.error(err);}
-    finally{downloadZipBtn.disabled=false; downloadZipBtn.innerText="Download All Passports (ZIP)";}
-  });
-
-  async function checkDuplicateLive(){
-    const surnameInput=form.surname; const firstnameInput=form.firstname; const submitBtn=form.querySelector("button[type='submit']");
-    let warning=document.getElementById("duplicateWarning");
-    if(!warning){warning=document.createElement("div"); warning.id="duplicateWarning"; warning.style.color="red"; warning.style.marginTop="5px"; surnameInput.parentNode.insertBefore(warning,submitBtn);}
-    async function validate(){
-      const s=surnameInput.value.trim().toUpperCase(); const f=firstnameInput.value.trim().toUpperCase();
-      if(!s&&!f){warning.textContent=""; submitBtn.disabled=false; surnameInput.style.borderColor=""; firstnameInput.style.borderColor=""; return;}
-      try{
-        const res=await fetch(SHEETBEST_URL); const allData=await res.json();
-        const duplicate=allData.find(r=>r.SURNAME===s && r.FIRSTNAME===f);
-        if(duplicate){warning.textContent="❌ Duplicate entry detected!"; submitBtn.disabled=true; surnameInput.style.borderColor="red"; firstnameInput.style.borderColor="red";}
-        else{warning.textContent=""; submitBtn.disabled=false; surnameInput.style.borderColor=""; firstnameInput.style.borderColor="";}
-      }catch(err){console.error("Failed to check duplicates:",err);}
-    }
-    surnameInput.addEventListener("input",validate); firstnameInput.addEventListener("input",validate);
-  }
-
-  checkDuplicateLive();
-
-  form.addEventListener("submit", async function(e){
-    e.preventDefault();
-    submitBtn.disabled=true; submitBtn.innerText="Checking for duplicates...";
-    try{
-      const file=document.getElementById("passport").files[0];
-      if(!file) throw "Passport required";
-      if(!["image/jpeg","image/png"].includes(file.type)) throw "Only JPG/PNG allowed";
-      if(file.size>5*1024*1024) throw "Max image size 5MB";
-
-      const existingRes=await fetch(SHEETBEST_URL); const existingData=await existingRes.json();
-      const newSurname=form.surname.value.trim().toUpperCase(); const newFirstname=form.firstname.value.trim().toUpperCase();
-      const duplicate=existingData.find(r=>r.SURNAME===newSurname && r.FIRSTNAME===newFirstname);
-      if(duplicate){alert("❌ Duplicate entry found for this SURNAME + FIRSTNAME."); submitBtn.disabled=false; submitBtn.innerText="SUBMIT"; return;}
-
-      submitBtn.innerText="Uploading passport...";
-      const cloudForm=new FormData(); cloudForm.append("file",file); cloudForm.append("upload_preset",CLOUDINARY_PRESET);
-      const cloudRes=await fetch(CLOUDINARY_URL,{method:"POST",body:cloudForm});
-      if(!cloudRes.ok) throw "Cloudinary upload failed"; const cloudData=await cloudRes.json(); if(!cloudData.secure_url) throw "Upload error";
-
-      submitBtn.innerText="Saving data...";
-      const data=[{
-        SURNAME:newSurname, FIRSTNAME:newFirstname, OTHERNAMES:form.othernames.value.trim().toUpperCase(),
-        PASSPORT:cloudData.secure_url, CADRE:form.cadre.value, GENDER:form.gender.value, BLOOD_GROUP:form.bloodgroup.value,
-        STATE:form.state.value, LGA_CITY_TOWN:form.lga_city_town.value, DATE_OF_BIRTH:formatDOB(form.dob.value),
-        OLEVEL_TYPE:form.olevel_type.value, OLEVEL_YEAR:form.olevel_year.value, OLEVEL_EXAM_NUMBER:form.olevel_exam.value,
-        ALEVEL_TYPE:form.alevel_type.value, ALEVEL_YEAR:form.alevel_year.value, PROFESSIONAL_CERTIFICATE_NUMBER:form.pro_cert.value,
-        ENGLISH:`${engGrade.value} (${engBody.value})`, MATHEMATICS:`${mathGrade.value} (${mathBody.value})`,
-        BIOLOGY:bioGrade.value?`${bioGrade.value} (${bioBody.value})`:"", CHEMISTRY:chemGrade.value?`${chemGrade.value} (${chemBody.value})`:"", PHYSICS:phyGrade.value?`${phyGrade.value} (${phyBody.value})`:"", REMARKS:form.remarks.value
-      }];
-
-      const resSheet=await fetch(SHEETBEST_URL,{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data)});
-      if(!resSheet.ok) throw "Sheet save failed";
-
-      form.innerHTML=`<div style="text-align:center;padding:40px">
-        <h2 style="color:#2ecc71">✅ Submission Successful</h2>
-        <p>Your information has been saved successfully.</p>
-        <p style="color:red; font-weight:bold;">⚠️ Admin will only accept your information after receiving your registration payment.</p>
-        <button onclick="location.reload()">Submit Another</button>
-      </div>`;
-
-    }catch(err){alert(err); submitBtn.disabled=false; submitBtn.innerText="SUBMIT"; console.error(err);}
-  });
-
-});
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
